@@ -5,49 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chess Host</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0;
-      padding: 20px;
-      background: #f0f0f0;
+    body{
+      font-family:Arial, sans-serif;
+      display:flex;flex-direction:column;align-items:center;
+      margin:0;padding:20px;background:#f0f0f0;
     }
-    #board-container {
-      display: grid;
-      grid-template-columns: repeat(8, 60px);
-      grid-template-rows: repeat(8, 60px);
-      gap: 2px;
-      margin-bottom: 20px;
+    #board-container{
+      display:grid;
+      grid-template-columns:repeat(8,60px);
+      grid-template-rows:repeat(8,60px);
+      gap:2px;margin-bottom:20px;
     }
-    .square {
-      width: 60px;
-      height: 60px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
+    .square{width:60px;height:60px;display:flex;justify-content:center;align-items:center;cursor:pointer;}
+    .square.light{background:#eee;}
+    .square.dark{background:#666;color:#fff;}
+    /* Modal */
+    .modal{
+      position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,0.5);
+      justify-content:center;align-items:center;
+      /* IMPORTANTE: di default invisibile */
+      display:none;
     }
-    .square.light { background: #eee; }
-    .square.dark  { background: #666; color: white; }
-    /* Modal styles */
-    .modal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      display: none; /* nascosto di default */
-    }
-    .modal.visible {
-      display: flex; /* mostrare aggiungendo la classe .visible */
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-    }
+    .modal.show{display:flex;} /* aggiunta con JS quando serve */
+    .modal-content{background:#fff;padding:20px;border-radius:8px;}
   </style>
 </head>
 <body>
@@ -58,7 +39,7 @@
     <button id="join-game-btn">Rispondi alla Partita</button>
   </div>
 
-  <!-- Promotion Modal -->
+  <!-- Promotion Modal: parte già invisibile -->
   <div id="promo-modal" class="modal">
     <div class="modal-content">
       <h2>Promozione Pedone</h2>
@@ -71,105 +52,101 @@
   <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-database-compat.js"></script>
 
   <script>
-    // Configurazione Firebase (metti i tuoi dati)
+    // Firebase config (sostituisci con la tua)
     const firebaseConfig = {
-      apiKey: 'YOUR_API_KEY',
-      authDomain: 'YOUR_AUTH_DOMAIN',
-      databaseURL: 'YOUR_DB_URL',
-      projectId: 'YOUR_PROJECT_ID',
-      storageBucket: 'YOUR_STORAGE_BUCKET',
-      messagingSenderId: 'YOUR_SENDER_ID',
-      appId: 'YOUR_APP_ID'
+      apiKey:'YOUR_API_KEY',
+      authDomain:'YOUR_AUTH_DOMAIN',
+      databaseURL:'YOUR_DB_URL',
+      projectId:'YOUR_PROJECT_ID',
+      storageBucket:'YOUR_STORAGE_BUCKET',
+      messagingSenderId:'YOUR_SENDER_ID',
+      appId:'YOUR_APP_ID'
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let gameState = null;
-    let playerId = null;
-    let gameId   = null;
-    const boardContainer = document.getElementById('board-container');
-    const promoModal     = document.getElementById('promo-modal');
+    let gameState=null, playerId=null, gameId=null;
+    const boardContainer=document.getElementById('board-container');
+    const promoModal=document.getElementById('promo-modal');
 
-    // Inizializza la scacchiera
-    function initBoard() {
-      boardContainer.innerHTML = '';
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const sq = document.createElement('div');
-          sq.classList.add('square', (r + c) % 2 ? 'dark' : 'light');
-          sq.dataset.row = r; sq.dataset.col = c;
-          sq.setAttribute('role','button');
-          sq.setAttribute('aria-label', `Casella ${String.fromCharCode(65 + c)}${8 - r}`);
-          sq.addEventListener('click', () => handleSquareClick(r, c));
+    /* ---------- BOARD ---------- */
+    function initBoard(){
+      boardContainer.innerHTML='';
+      for(let r=0;r<8;r++){
+        for(let c=0;c<8;c++){
+          const sq=document.createElement('div');
+          sq.className='square '+((r+c)%2?'dark':'light');
+          sq.dataset.row=r; sq.dataset.col=c;
+          sq.addEventListener('click',()=>handleSquareClick(r,c));
           boardContainer.appendChild(sq);
         }
       }
     }
 
-    // Nuova partita (solo admin)
-    async function startNewGame() {
-      const pw = prompt('Inserisci password admin:');
-      if (pw !== 'chess123') return alert('Password errata');
-      playerId = 'player1';
-      gameState = { moves: [], turn: 'white' };
-      const ref = db.ref('games').push();
-      gameId = ref.key;
-      await ref.set({
-        state: gameState,
-        players: { player1: true }
-      });
+    /* ---------- GAME FLOW ---------- */
+    async function startNewGame(){
+      const pw=prompt('Inserisci password admin:');
+      if(pw!=='chess123') return alert('Password errata');
+      playerId='player1';
+      gameState={moves:[],turn:'white'};
+      const ref=db.ref('games').push();
+      gameId=ref.key;
+      await ref.set({state:gameState,players:{player1:true}});
       renderBoard();
-      alert(`Partita creata! ID: ${gameId}`);
+      alert('Partita creata! ID: '+gameId);
     }
 
-    // Unisciti a una partita esistente
-    async function joinGame() {
-      const inputId = document.getElementById('game-id-input').value.trim();
-      if (!inputId) return alert('Inserisci un ID valido');
-      gameId = inputId;
-      playerId = 'player2';
-      const gameRef = db.ref('games/' + gameId);
-      const snap = await gameRef.get();
-      if (!snap.exists()) return alert('Partita non trovata');
+    async function joinGame(){
+      const inputId=document.getElementById('game-id-input').value.trim();
+      if(!inputId) return alert('Inserisci un ID valido');
+      gameId=inputId; playerId='player2';
+      const gameRef=db.ref('games/'+gameId);
+      const snap=await gameRef.get();
+      if(!snap.exists()) return alert('Partita non trovata');
 
-      // Segui gli aggiornamenti in realtime
-      gameRef.on('value', snap => {
-        const data = snap.val();
-        gameState = data.state;
+      gameState=snap.val().state||{moves:[],turn:'white'};
+      await gameRef.child('players/player2').set(true);
+
+      gameRef.on('value', s=>{
+        gameState=s.val().state;
         renderBoard();
       });
 
-      // Aggiorna lista giocatori
-      await gameRef.child('players/player2').set(true);
       renderBoard();
     }
 
-    // Gestione click su casella
-    function handleSquareClick(r, c) {
-      // Se stai gestendo promozione, mostra il modal...
-      // promoModal.classList.add('visible');
-      makeMove(r, c);
+    function handleSquareClick(r,c){
+      // Esempio di trigger promozione
+      // if(needsPromotion(r,c)){ openPromotionModal(); return; }
+      makeMove(r,c);
     }
 
-    // Esegui e salva mossa
-    async function makeMove(r, c) {
-      gameState.moves.push({ r, c, by: playerId });
-      await db.ref(`games/${gameId}/state`).set(gameState);
+    async function makeMove(r,c){
+      gameState.moves.push({r,c,by:playerId});
+      await db.ref('games/'+gameId+'/state').set(gameState);
     }
 
-    // Disegna la scacchiera e i pezzi (placeholder)
-    function renderBoard() {
+    /* ---------- MODAL ---------- */
+    function openPromotionModal(){
+      promoModal.classList.add('show');
+    }
+    function closePromotionModal(){
+      promoModal.classList.remove('show');
+    }
+
+    /* ---------- RENDER ---------- */
+    function renderBoard(){
       initBoard();
-      // Qui disegneresti i pezzi in base a gameState.moves…
-      // Quando serve il modal di promozione:
-      // promoModal.classList.add('visible');
+      // TODO: disegnare i pezzi in base a gameState
+      // Assicuriamoci che il modal sia chiuso a ogni render
+      closePromotionModal();
     }
 
-    // Event listeners
-    document.getElementById('new-game-btn').addEventListener('click', startNewGame);
-    document.getElementById('join-game-btn').addEventListener('click', joinGame);
+    /* ---------- UI events ---------- */
+    document.getElementById('new-game-btn').onclick=startNewGame;
+    document.getElementById('join-game-btn').onclick=joinGame;
 
-    // Avvia
+    /* ---------- start ---------- */
     initBoard();
   </script>
 </body>
