@@ -385,6 +385,7 @@
 </head>
 <body>
     <div class="container">
+        <!-- Schermata Login Amministratore -->
         <div id="admin-login" class="screen active">
             <h1>🏰 Chess Host</h1>
             <h2>Accesso Amministratore</h2>
@@ -401,6 +402,7 @@
             <div class="connection-status" id="firebase-status">🔗 Connessione Firebase...</div>
         </div>
 
+        <!-- Pannello Controllo Amministratore -->
         <div id="admin-panel" class="screen">
             <h1>🎮 Pannello Amministratore</h1>
             <div class="firebase-info">
@@ -422,6 +424,7 @@
             <div id="admin-message"></div>
         </div>
 
+        <!-- Schermata Partita -->
         <div id="game-screen" class="screen">
             <h1>♔ Chess Host</h1>
             <div class="firebase-info">
@@ -429,6 +432,7 @@
                 <small>Partita permanente • Sincronizzazione real-time • Cross-device</small>
             </div>
             
+            <!-- Link Corrente sempre visibile -->
             <div class="game-info" id="current-link-display" style="background: #e7f3ff; border: 2px solid #007bff;">
                 <h4 style="margin: 0 0 10px 0; color: #007bff;">🔗 Link Partita</h4>
                 <input type="text" id="current-game-url" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#ffffff; border:1px solid #007bff; border-radius:4px;">
@@ -460,6 +464,7 @@
             </div>
         </div>
 
+        <!-- Schermata Caricamento -->
         <div id="loading-screen" class="screen">
             <div class="loading">
                 <div class="spinner"></div>
@@ -468,6 +473,7 @@
             </div>
         </div>
 
+        <!-- Schermata Errore -->
         <div id="error-screen" class="screen">
             <h1>⚠️ Errore</h1>
             <div class="status-message status-error" id="error-message">
@@ -476,6 +482,7 @@
             <button class="btn" onclick="location.reload()">Ricarica Pagina</button>
         </div>
 
+        <!-- Modal Promozione Pedone -->
         <div id="promotion-modal" class="promotion-modal">
             <div class="promotion-content">
                 <h3>🎉 Promozione Pedone!</h3>
@@ -499,6 +506,7 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1134,7 +1142,7 @@
 
             if (colDiff === 0 && !targetPiece) {
                 if (rowDiff === direction) return true;
-                if (fromRow === startRow && rowDiff === 2 * direction && isPathClear(from, to)) return true;
+                if (fromRow === startRow && rowDiff === 2 * direction) return true;
             }
             
             if (Math.abs(colDiff) === 1 && rowDiff === direction) {
@@ -1186,8 +1194,8 @@
                 return false;
             }
 
-            if (!gameState.board[kingPos] || gameState.board[kingPos][1] !== 'king' || gameState.board[kingPos][0] !== color) return false;
-            if (!gameState.board[rookPos] || gameState.board[rookPos][1] !== 'rook' || gameState.board[rookPos][0] !== color) return false;
+            if (!gameState.board[kingPos] || gameState.board[kingPos][1] !== 'king') return false;
+            if (!gameState.board[rookPos] || gameState.board[rookPos][1] !== 'rook') return false;
 
             const startCol = kingside ? 5 : 1;
             const endCol = kingside ? 6 : 3;
@@ -1288,18 +1296,18 @@
                 if (from === row * 8 + 7) {
                     gameState.castlingRights[color].kingside = false;
                 }
-                if (from === row * 8 + 0) {
+                if (from === row * 8) {
                     gameState.castlingRights[color].queenside = false;
                 }
             }
 
             const toRow = Math.floor(to / 8);
             const toCol = to % 8;
-            if (gameState.board[to] && gameState.board[to][1] === 'rook') {
+            if ((toRow === 0 || toRow === 7) && (toCol === 0 || toCol === 7)) {
                 const capturedColor = toRow === 0 ? 'black' : 'white';
                 if (toCol === 0) {
                     gameState.castlingRights[capturedColor].queenside = false;
-                } else if (toCol === 7) {
+                } else {
                     gameState.castlingRights[capturedColor].kingside = false;
                 }
             }
@@ -1417,7 +1425,7 @@
 
         function updateMovesHistory() {
             const movesList = document.getElementById('moves-list');
-            if (!gameState.moveHistory || gameState.moveHistory.length === 0) {
+            if (gameState.moveHistory.length === 0) {
                 movesList.innerHTML = '<p>Nessuna mossa ancora effettuata.</p>';
                 return;
             }
@@ -1521,22 +1529,16 @@
                     if (gameLoaded && gameState.gameActive) {
                         console.log('🔥 Partita caricata da Firebase');
                         
-                        // ===== BLOCCO DI CODICE CORRETTO =====
-                        // Determina il ruolo del giocatore in base allo stato di login.
-                        const isAdminLoggedIn = localStorage.getItem('chessAdminAuth') === 'true';
-
-                        if (isAdminLoggedIn) {
-                            // Se l'utente è loggato come admin (il creatore), è sempre il bianco.
+                        // Determina il ruolo del giocatore in base al turno corrente
+                        if (gameState.currentPlayer === 'white') {
                             gameState.playerColor = 'white';
                             gameState.isAdmin = true;
-                            console.log('🎯 Riconosciuto come Admin/Bianco');
+                            console.log('🎯 Assegnato BIANCO/Admin');
                         } else {
-                            // Altrimenti, è l'avversario invitato, che è sempre il nero.
                             gameState.playerColor = 'black';  
                             gameState.isAdmin = false;
-                            console.log('🎯 Riconosciuto come Invitato/Nero');
+                            console.log('🎯 Assegnato NERO/Invitato');
                         }
-                        // ===== FINE BLOCCO CORRETTO =====
                         
                         // Setup real-time listener
                         setupGameListener(gameId);
