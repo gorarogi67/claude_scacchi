@@ -435,21 +435,34 @@
         }
 
         function getGameUrl(gameId) {
+            // Codifica lo stato della partita nell'URL per condivisione cross-device
+            const gameData = encodeURIComponent(JSON.stringify({
+                gameId: gameState.gameId,
+                players: gameState.players,
+                board: gameState.board,
+                currentPlayer: gameState.currentPlayer,
+                moveHistory: gameState.moveHistory,
+                gameActive: gameState.gameActive,
+                gameEnded: gameState.gameEnded,
+                castlingRights: gameState.castlingRights,
+                enPassantTarget: gameState.enPassantTarget
+            }));
+
             // Prima prova a usare l'URL del form di input
             const customUrl = document.getElementById('base-url')?.value;
             if (customUrl && customUrl.trim()) {
-                const baseUrl = customUrl.trim().replace(/\/$/, ''); // Rimuovi slash finale se presente
-                return baseUrl + '?game=' + gameId;
+                const baseUrl = customUrl.trim().replace(/\/$/, '');
+                return baseUrl + '?game=' + gameId + '&data=' + gameData;
             }
             
             // Poi prova a usare l'URL salvato nello stato
             if (gameState.baseUrl) {
                 const baseUrl = gameState.baseUrl.replace(/\/$/, '');
-                return baseUrl + '?game=' + gameId;
+                return baseUrl + '?game=' + gameId + '&data=' + gameData;
             }
             
             // Fallback all'URL corrente 
-            return window.location.origin + window.location.pathname + '?game=' + gameId;
+            return window.location.origin + window.location.pathname + '?game=' + gameId + '&data=' + gameData;
         }
 
         // Gestione URL e parametri
@@ -1162,6 +1175,41 @@
 
         // Carica solo i dati della partita senza stato admin
         function loadGameDataOnly() {
+            // Prima prova a caricare dai parametri URL
+            const urlGameData = getUrlParameter('data');
+            if (urlGameData) {
+                try {
+                    const decodedData = JSON.parse(decodeURIComponent(urlGameData));
+                    console.log('Dati partita caricati da URL:', decodedData);
+                    
+                    gameState = {
+                        board: decodedData.board,
+                        currentPlayer: decodedData.currentPlayer,
+                        gameActive: decodedData.gameActive,
+                        selectedSquare: null, // Reset selezione
+                        moveHistory: decodedData.moveHistory || [],
+                        players: decodedData.players || { white: 'Bianco', black: 'Nero' },
+                        gameId: decodedData.gameId,
+                        isAdmin: false, // FORZA false per i link
+                        playerColor: null, // Verrà impostato dopo
+                        baseUrl: null,
+                        gameEnded: decodedData.gameEnded || false,
+                        castlingRights: decodedData.castlingRights || {
+                            white: { kingside: true, queenside: true },
+                            black: { kingside: true, queenside: true }
+                        },
+                        enPassantTarget: decodedData.enPassantTarget || null,
+                        halfMoveClock: 0,
+                        fullMoveNumber: 1
+                    };
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Errore nel parsing dei dati URL:', error);
+                }
+            }
+
+            // Fallback: prova localStorage (per compatibilità)
             const saved = localStorage.getItem('chessGameState');
             if (saved) {
                 const loadedState = JSON.parse(saved);
@@ -1188,9 +1236,10 @@
                     fullMoveNumber: loadedState.fullMoveNumber || 1
                 };
                 
-                console.log('Dati partita caricati per giocatore invitato');
+                console.log('Dati partita caricati da localStorage (fallback)');
                 return true;
             }
+            
             return false;
         }
 
