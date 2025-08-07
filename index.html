@@ -31,14 +31,17 @@
     }
     .square.light { background: #eee; }
     .square.dark  { background: #666; color: white; }
-    .hidden { display: none; }
+    /* Modal styles */
     .modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      display: flex;
       background: rgba(0,0,0,0.5);
       justify-content: center;
       align-items: center;
+      display: none; /* nascosto di default */
+    }
+    .modal.visible {
+      display: flex; /* mostrare aggiungendo la classe .visible */
     }
     .modal-content {
       background: white;
@@ -56,7 +59,7 @@
   </div>
 
   <!-- Promotion Modal -->
-  <div id="promo-modal" class="modal hidden">
+  <div id="promo-modal" class="modal">
     <div class="modal-content">
       <h2>Promozione Pedone</h2>
       <div id="promo-options"></div>
@@ -85,6 +88,7 @@
     let playerId = null;
     let gameId   = null;
     const boardContainer = document.getElementById('board-container');
+    const promoModal     = document.getElementById('promo-modal');
 
     // Inizializza la scacchiera
     function initBoard() {
@@ -95,8 +99,7 @@
           sq.classList.add('square', (r + c) % 2 ? 'dark' : 'light');
           sq.dataset.row = r; sq.dataset.col = c;
           sq.setAttribute('role','button');
-          sq.setAttribute('aria-label',
-            `Casella ${String.fromCharCode(65 + c)}${8 - r}`);
+          sq.setAttribute('aria-label', `Casella ${String.fromCharCode(65 + c)}${8 - r}`);
           sq.addEventListener('click', () => handleSquareClick(r, c));
           boardContainer.appendChild(sq);
         }
@@ -143,6 +146,8 @@
 
     // Gestione click su casella
     function handleSquareClick(r, c) {
+      // Se stai gestendo promozione, mostra il modal...
+      // promoModal.classList.add('visible');
       makeMove(r, c);
     }
 
@@ -156,13 +161,13 @@
     function renderBoard() {
       initBoard();
       // Qui disegneresti i pezzi in base a gameState.moves…
+      // Quando serve il modal di promozione:
+      // promoModal.classList.add('visible');
     }
 
     // Event listeners
-    document.getElementById('new-game-btn')
-      .addEventListener('click', startNewGame);
-    document.getElementById('join-game-btn')
-      .addEventListener('click', joinGame);
+    document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+    document.getElementById('join-game-btn').addEventListener('click', joinGame);
 
     // Avvia
     initBoard();
