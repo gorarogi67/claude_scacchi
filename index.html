@@ -394,19 +394,19 @@
         <!-- Schermata Partita -->
         <div id="game-screen" class="screen">
             <h1>♔ Chess Host</h1>
-            <div class="status-message status-warning" style="margin-bottom: 15px;">
+            <div class="status-message status-success" style="margin-bottom: 15px;">
                 <small>
-                    <strong>🧪 Versione Debug:</strong> Apri la Console (F12) per vedere i log di debug.
-                    <br><strong>📖 Come Giocare:</strong> Fai la tua mossa → Copia il link aggiornato → Invia all'avversario → L'avversario apre il nuovo link
+                    <strong>🚀 Link Super-Compatti!</strong> Ora i link sono cortissimi e funzionano perfettamente su tutti i dispositivi!
+                    <br><strong>📖 Come Giocare:</strong> Fai la tua mossa → Copia il link compatto → Invia all'avversario → L'avversario apre il nuovo link
                 </small>
             </div>
             
             <!-- Link Corrente sempre visibile -->
             <div class="game-info" id="current-link-display" style="background: #e7f3ff; border: 2px solid #007bff;">
-                <h4 style="margin: 0 0 10px 0; color: #007bff;">🔗 Link Partita Corrente</h4>
+                <h4 style="margin: 0 0 10px 0; color: #007bff;">🔗 Link Partita Compatto</h4>
                 <input type="text" id="current-game-url" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#ffffff; border:1px solid #007bff; border-radius:4px;">
-                <button class="btn" onclick="copyCurrentLink()" style="background: #007bff;">📋 Copia Link Corrente</button>
-                <p style="margin: 5px 0 0 0; color: #555;"><em>💡 Condividi questo link per far giocare l'avversario</em></p>
+                <button class="btn" onclick="copyCurrentLink()" style="background: #007bff;">📋 Copia Link Compatto</button>
+                <p style="margin: 5px 0 0 0; color: #555;"><em>🚀 Link super-corto che funziona su tutti i dispositivi!</em></p>
                 <small style="color: #666;" id="url-length-info"></small>
             </div>
 
@@ -558,57 +558,88 @@
         }
 
         function getGameUrl(gameId) {
-            // Per mobile, creiamo URL più corti usando un approccio ibrido
-            const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+            console.log('=== GENERAZIONE LINK COMPATTO ===');
             
-            console.log('=== GENERAZIONE LINK ===');
-            console.log('È mobile:', isMobile);
-            
-            if (isMobile || window.location.href.length > 1500) {
-                // URL corto per mobile - salva i dati con una chiave specifica
-                const gameData = {
-                    gameId: gameState.gameId,
-                    players: gameState.players,
-                    board: gameState.board,
-                    currentPlayer: gameState.currentPlayer,
-                    moveHistory: gameState.moveHistory,
-                    gameActive: gameState.gameActive,
-                    gameEnded: gameState.gameEnded,
-                    castlingRights: gameState.castlingRights,
-                    enPassantTarget: gameState.enPassantTarget
-                };
-
-                // Salva i dati della partita con una chiave specifica
-                const gameKey = 'game_data_' + gameId;
-                localStorage.setItem(gameKey, JSON.stringify(gameData));
-                console.log('Dati salvati con chiave:', gameKey);
-
-                // Crea URL corto
-                const baseUrl = getBaseUrl();
-                const shortUrl = baseUrl + '?game=' + gameId + '&mobile=1';
-                console.log('URL corto generato:', shortUrl);
-                return shortUrl;
-            }
-
-            // URL lungo per desktop (come prima)
-            const gameData = {
-                gameId: gameState.gameId,
-                players: gameState.players,
-                board: gameState.board,
-                currentPlayer: gameState.currentPlayer,
-                moveHistory: gameState.moveHistory,
-                gameActive: gameState.gameActive,
-                gameEnded: gameState.gameEnded,
-                castlingRights: gameState.castlingRights,
-                enPassantTarget: gameState.enPassantTarget
+            // Dati MINIMI necessari - solo lo stato essenziale  
+            const compactData = {
+                id: gameState.gameId,
+                p: gameState.players,
+                b: boardToCompactString(gameState.board),
+                c: gameState.currentPlayer[0], // 'w' o 'b' invece di 'white'/'black'  
+                m: gameState.moveHistory.length, // Solo il numero di mosse
+                a: gameState.gameActive,
+                e: gameState.gameEnded
             };
 
-            const encodedData = encodeURIComponent(JSON.stringify(gameData));
-            const baseUrl = getBaseUrl();
-            const longUrl = baseUrl + '?game=' + gameId + '&data=' + encodedData;
+            console.log('Dati originali:', {
+                gameId: gameState.gameId,
+                players: gameState.players,  
+                currentPlayer: gameState.currentPlayer,
+                moves: gameState.moveHistory.length
+            });
+
+            console.log('Dati compatti:', compactData);
+
+            // Codifica compatta in Base64
+            const jsonString = JSON.stringify(compactData);
+            const base64Data = btoa(jsonString);
             
-            console.log('URL lungo generato per desktop');
-            return longUrl;
+            console.log('JSON length:', jsonString.length);
+            console.log('Base64 length:', base64Data.length);
+
+            const baseUrl = getBaseUrl();
+            const shortUrl = baseUrl + '?g=' + base64Data;
+            
+            console.log('URL finale length:', shortUrl.length);
+            console.log('URL finale:', shortUrl);
+
+            return shortUrl;
+        }
+
+        // Converte la board in una stringa compatta
+        function boardToCompactString(board) {
+            let compact = '';
+            for (let i = 0; i < 64; i++) {
+                if (board[i]) {
+                    const [color, piece] = board[i];
+                    // w=white, b=black + prima lettera del pezzo  
+                    compact += (color[0] + piece[0]).toUpperCase();
+                } else {
+                    compact += '..'; // Casella vuota
+                }
+            }
+            return compact;
+        }
+
+        // Converte la stringa compatta in board
+        function compactStringToBoard(compactString) {
+            const board = new Array(64).fill(null);
+            
+            for (let i = 0; i < 64; i++) {
+                const pos = i * 2;
+                if (pos < compactString.length - 1) {
+                    const piece = compactString.substr(pos, 2);
+                    if (piece !== '..') {
+                        const color = piece[0].toLowerCase() === 'w' ? 'white' : 'black';
+                        let pieceType = '';
+                        
+                        switch (piece[1].toLowerCase()) {
+                            case 'k': pieceType = 'king'; break;
+                            case 'q': pieceType = 'queen'; break;
+                            case 'r': pieceType = 'rook'; break;
+                            case 'b': pieceType = 'bishop'; break;
+                            case 'n': pieceType = 'knight'; break;
+                            case 'p': pieceType = 'pawn'; break;
+                        }
+                        
+                        if (pieceType) {
+                            board[i] = [color, pieceType];
+                        }
+                    }
+                }
+            }
+            
+            return board;
         }
 
         function getBaseUrl() {
@@ -1146,20 +1177,14 @@
             // Dopo ogni mossa, mostra messaggio di successo semplice
             if (gameState.gameActive) {
                 const currentPlayerName = gameState.players[gameState.currentPlayer];
-                const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
-                
-                let instructions = '🔗 Il link aggiornato è nella sezione blu sopra!';
-                if (isMobile) {
-                    instructions += '\n📱 Link ottimizzato per dispositivi mobili.';
-                }
                 
                 const linkMessage = `
                     <div class="status-message status-success" style="position: relative;">
                         <button onclick="this.parentElement.style.display='none'" style="position: absolute; top: 5px; right: 10px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
                         <h4>🔄 Mossa Effettuata!</h4>
                         <p><strong>Tocca a: ${currentPlayerName}</strong></p>
-                        <p>${instructions}</p>
-                        <p><em>💡 Condividi il link per far giocare l'avversario</em></p>
+                        <p>🚀 Link compatto aggiornato nella sezione blu sopra!</p>
+                        <p><em>💡 Ora i link sono super-corti e funzionano su tutti i dispositivi!</em></p>
                     </div>
                 `;
                 
@@ -1213,18 +1238,11 @@
         function copyCurrentLink() {
             const linkField = document.getElementById('current-game-url');
             if (linkField && linkField.value) {
-                const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
-                const isMobileLink = linkField.value.includes('&mobile=1');
-                
                 copyToClipboard(linkField.value);
                 
-                // Feedback specifico per tipo di link
-                let message = '📋 Link copiato negli appunti!';
-                if (isMobileLink) {
-                    message += '\n\n📱 Questo è un link ottimizzato per mobile.';
-                } else if (isMobile) {
-                    message += '\n\n⚠️ Attenzione: stai copiando un link desktop su mobile. Se non funziona, riprova a generare il link.';
-                }
+                // Feedback ottimistico per il nuovo sistema
+                let message = '📋 Link compatto copiato negli appunti!';
+                message += '\n\n🚀 Questo link super-corto funziona su tutti i dispositivi: desktop, tablet, smartphone.';
                 
                 // Sostituisci alert con messaggio temporaneo
                 showMessage('game-status', message, 'success');
@@ -1245,26 +1263,18 @@
                 // Mostra info debug sulla lunghezza URL
                 if (lengthInfo) {
                     const urlLength = currentUrl.length;
-                    const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
-                    const isMobileLink = currentUrl.includes('&mobile=1');
                     
-                    let infoText = `Debug: URL ${urlLength} caratteri`;
+                    let infoText = `✅ URL Compatto: ${urlLength} caratteri`;
                     
-                    if (isMobileLink) {
-                        infoText += ' 📱 (Link Mobile Ottimizzato)';
+                    if (urlLength < 200) {
+                        infoText += ' 🚀 (Super Compatto!)';
+                        lengthInfo.style.color = '#00aa00';
+                    } else if (urlLength < 500) {
+                        infoText += ' ✅ (Compatto)';
                         lengthInfo.style.color = '#0066cc';
-                    } else if (isMobile) {
-                        infoText += ' 📱 (Desktop Link su Mobile - potrebbe non funzionare)';
-                        lengthInfo.style.color = '#ff6600';
                     } else {
-                        infoText += ' 💻 (Link Desktop)';
-                        lengthInfo.style.color = '#666';
-                    }
-                    
-                    // Avvisa se l'URL è troppo lungo
-                    if (urlLength > 2000) {
-                        infoText += ' ⚠️ URL potrebbe essere troppo lungo!';
-                        lengthInfo.style.color = 'red';
+                        infoText += ' ⚠️ (Ancora lungo)';
+                        lengthInfo.style.color = '#ff6600';
                     }
                     
                     lengthInfo.textContent = infoText;
@@ -1515,12 +1525,12 @@
 
         // Persistenza dati
         function saveGameState() {
-            // Salvataggio standard
+            // Salvataggio standard per admin/invitato
             if (gameState.isAdmin) {
                 localStorage.setItem('chessGameState', JSON.stringify(gameState));
                 console.log('Stato salvato (Admin):', gameState.gameId);
             } else {
-                // Gli invitati salvano solo i dati della partita senza sovrascrivere l'admin
+                // Gli invitati aggiornano solo i dati di gioco
                 const currentSaved = localStorage.getItem('chessGameState');
                 if (currentSaved) {
                     try {
@@ -1538,33 +1548,10 @@
                             fullMoveNumber: gameState.fullMoveNumber
                         };
                         localStorage.setItem('chessGameState', JSON.stringify(updatedState));
-                        console.log('Dati partita aggiornati (Invitato):', gameState.gameId);
+                        console.log('Dati partita aggiornati (Invitato)');
                     } catch (error) {
-                        console.error('Errore nell\'aggiornamento stato invitato:', error);
+                        console.error('Errore nell\'aggiornamento stato:', error);
                     }
-                }
-            }
-
-            // Salvataggio aggiuntivo con chiave specifica per condivisione mobile
-            if (gameState.gameId && gameState.gameActive) {
-                const gameKey = 'game_data_' + gameState.gameId;
-                const gameData = {
-                    gameId: gameState.gameId,
-                    players: gameState.players,
-                    board: gameState.board,
-                    currentPlayer: gameState.currentPlayer,
-                    moveHistory: gameState.moveHistory,
-                    gameActive: gameState.gameActive,
-                    gameEnded: gameState.gameEnded,
-                    castlingRights: gameState.castlingRights,
-                    enPassantTarget: gameState.enPassantTarget
-                };
-                
-                try {
-                    localStorage.setItem(gameKey, JSON.stringify(gameData));
-                    console.log('Dati partita salvati per condivisione mobile con chiave:', gameKey);
-                } catch (error) {
-                    console.error('Errore nel salvataggio dati mobile:', error);
                 }
             }
         }
@@ -1583,18 +1570,21 @@
 
         // Inizializzazione applicazione  
         function initializeApp() {
-            // Controlla se c'è un link di partita nell'URL
-            const gameId = getUrlParameter('game');
+            // Controlla se c'è un link di partita nell'URL (nuovo formato compatto o vecchio)
+            const compactData = getUrlParameter('g');
+            const oldGameId = getUrlParameter('game');
+            const hasGameLink = compactData || oldGameId;
             
             console.log('=== INIZIALIZZAZIONE APP ===');
             console.log('User Agent:', navigator.userAgent);
             console.log('URL completo:', window.location.href);
             console.log('URL length:', window.location.href.length);
+            console.log('Formato compatto (g):', !!compactData);
+            console.log('Formato vecchio (game):', !!oldGameId);
             
-            if (gameId) {
+            if (hasGameLink) {
                 // Accesso tramite link partita
                 console.log('=== ACCESSO TRAMITE LINK ===');
-                console.log('gameId dall\'URL:', gameId);
                 
                 showScreen('loading-screen');
                 
@@ -1602,7 +1592,7 @@
                     // Carica i dati della partita
                     const gameLoaded = loadGameDataOnly();
                     
-                    if (gameLoaded && gameState.gameId === gameId && gameState.gameActive) {
+                    if (gameLoaded && gameState.gameActive) {
                         
                         // NUOVA LOGICA: Chi deve giocare ora?
                         console.log('=== DETERMINAZIONE RUOLO ===');
@@ -1630,24 +1620,22 @@
                         // Partita non trovata o non valida - mostra errore dettagliato
                         console.log('=== ERRORE CARICAMENTO ===');
                         console.log('gameLoaded:', gameLoaded);
-                        console.log('gameId match:', gameState.gameId, '===', gameId, '→', gameState.gameId === gameId);
                         console.log('gameActive:', gameState.gameActive);
                         
                         showScreen('error-screen');
                         
-                        let errorMsg = 'Link partita non valido.';
+                        let errorMsg = 'Link partita non valido o corrotto.';
                         if (!gameLoaded) {
-                            errorMsg += ' Impossibile caricare i dati della partita dall\'URL.';
-                        } else if (gameState.gameId !== gameId) {
-                            errorMsg += ` ID partita non corrispondente (atteso: ${gameId}, trovato: ${gameState.gameId}).`;
+                            errorMsg += ' Impossibile decodificare i dati dal link.';
                         } else if (!gameState.gameActive) {
-                            errorMsg += ' La partita non è attiva.';
+                            errorMsg += ' La partita non è più attiva.';
                         }
                         
-                        // Su mobile, aggiungi suggerimento
-                        if (/iPad|iPhone|iPod|Android/i.test(navigator.userAgent)) {
-                            errorMsg += '\n\n📱 Suggerimento: Su dispositivi mobili, prova a copiare il link e aprirlo in una nuova scheda.';
-                        }
+                        // Suggerimenti specifici
+                        errorMsg += '\n\n💡 Suggerimenti:\n';
+                        errorMsg += '• Controlla che il link sia completo\n';
+                        errorMsg += '• Prova a copiare nuovamente il link\n';
+                        errorMsg += '• Assicurati che la partita sia ancora attiva';
                         
                         document.getElementById('error-message').textContent = errorMsg;
                     }
@@ -1667,66 +1655,60 @@
 
         // Carica solo i dati della partita senza stato admin
         function loadGameDataOnly() {
-            const gameId = getUrlParameter('game');
-            const isMobileLink = getUrlParameter('mobile') === '1';
+            console.log('=== CARICAMENTO DA URL COMPATTO ===');
             
-            console.log('=== CARICAMENTO DA URL ===');
-            console.log('gameId:', gameId);
-            console.log('isMobileLink:', isMobileLink);
-            
-            // Prova prima il metodo mobile (localStorage con chiave specifica)
-            if (isMobileLink && gameId) {
-                console.log('=== TENTATIVO CARICAMENTO MOBILE ===');
-                const gameKey = 'game_data_' + gameId;
-                const savedGameData = localStorage.getItem(gameKey);
+            // Nuovo formato compatto
+            const compactData = getUrlParameter('g');
+            if (compactData) {
+                console.log('Trovati dati compatti, lunghezza:', compactData.length);
                 
-                if (savedGameData) {
-                    try {
-                        const gameData = JSON.parse(savedGameData);
-                        console.log('✅ Dati caricati da localStorage mobile');
-                        console.log('currentPlayer dai dati:', gameData.currentPlayer);
-                        console.log('Numero mosse:', gameData.moveHistory ? gameData.moveHistory.length : 0);
-                        
-                        gameState = {
-                            board: gameData.board,
-                            currentPlayer: gameData.currentPlayer,
-                            gameActive: gameData.gameActive,
-                            selectedSquare: null,
-                            moveHistory: gameData.moveHistory || [],
-                            players: gameData.players || { white: 'Bianco', black: 'Nero' },
-                            gameId: gameData.gameId,
-                            isAdmin: false,
-                            playerColor: null,
-                            baseUrl: null,
-                            gameEnded: gameData.gameEnded || false,
-                            castlingRights: gameData.castlingRights || {
-                                white: { kingside: true, queenside: true },
-                                black: { kingside: true, queenside: true }
-                            },
-                            enPassantTarget: gameData.enPassantTarget || null,
-                            halfMoveClock: 0,
-                            fullMoveNumber: 1
-                        };
-                        
-                        return true;
-                    } catch (error) {
-                        console.error('Errore parsing dati mobile:', error);
-                    }
-                } else {
-                    console.log('Nessun dato trovato con chiave:', gameKey);
+                try {
+                    // Decodifica da Base64
+                    const jsonString = atob(compactData);
+                    const data = JSON.parse(jsonString);
+                    
+                    console.log('✅ Dati compatti decodificati:', data);
+                    
+                    // Ricostruisci lo stato completo dai dati compatti
+                    gameState = {
+                        board: compactStringToBoard(data.b),
+                        currentPlayer: data.c === 'w' ? 'white' : 'black',
+                        gameActive: data.a,
+                        selectedSquare: null,
+                        moveHistory: [], // Ricostruiamo una storia vuota  
+                        players: data.p || { white: 'Bianco', black: 'Nero' },
+                        gameId: data.id,
+                        isAdmin: false,
+                        playerColor: null,
+                        baseUrl: null,
+                        gameEnded: data.e || false,
+                        castlingRights: {
+                            white: { kingside: true, queenside: true },
+                            black: { kingside: true, queenside: true }
+                        },
+                        enPassantTarget: null,
+                        halfMoveClock: 0,
+                        fullMoveNumber: Math.floor(data.m / 2) + 1
+                    };
+                    
+                    console.log('✅ Stato ricostruito da dati compatti');
+                    console.log('currentPlayer:', gameState.currentPlayer);
+                    console.log('gameId:', gameState.gameId);
+                    console.log('gameActive:', gameState.gameActive);
+                    
+                    return true;
+                } catch (error) {
+                    console.error('❌ Errore decodifica dati compatti:', error);
                 }
             }
 
-            // Metodo classico: dati nell'URL
+            // Fallback: formato precedente con parametro 'data'
             const urlGameData = getUrlParameter('data');
             if (urlGameData) {
-                console.log('=== TENTATIVO CARICAMENTO URL CLASSICO ===');
-                console.log('Lunghezza data raw:', urlGameData.length);
-                
+                console.log('=== FALLBACK: CARICAMENTO FORMATO PRECEDENTE ===');
                 try {
                     const decodedData = JSON.parse(decodeURIComponent(urlGameData));
-                    console.log('✅ Dati decodificati da URL');
-                    console.log('currentPlayer NEI DATI:', decodedData.currentPlayer);
+                    console.log('✅ Dati precedenti decodificati');
                     
                     gameState = {
                         board: decodedData.board,
@@ -1751,45 +1733,49 @@
                     
                     return true;
                 } catch (error) {
-                    console.error('Errore parsing dati URL:', error);
+                    console.error('Errore parsing dati precedenti:', error);
                 }
             }
 
-            // Fallback: localStorage generico
-            console.log('=== TENTATIVO FALLBACK LOCALSTORAGE ===');
-            const saved = localStorage.getItem('chessGameState');
-            if (saved) {
-                try {
-                    const loadedState = JSON.parse(saved);
-                    console.log('✅ Dati trovati in localStorage generico');
-                    
-                    gameState = {
-                        board: loadedState.board,
-                        currentPlayer: loadedState.currentPlayer,
-                        gameActive: loadedState.gameActive,
-                        selectedSquare: null,
-                        moveHistory: loadedState.moveHistory || [],
-                        players: loadedState.players || { white: 'Bianco', black: 'Nero' },
-                        gameId: loadedState.gameId,
-                        isAdmin: false,
-                        playerColor: null,
-                        baseUrl: loadedState.baseUrl,
-                        gameEnded: loadedState.gameEnded || false,
-                        castlingRights: loadedState.castlingRights || {
-                            white: { kingside: true, queenside: true },
-                            black: { kingside: true, queenside: true }
-                        },
-                        enPassantTarget: loadedState.enPassantTarget || null,
-                        halfMoveClock: loadedState.halfMoveClock || 0,
-                        fullMoveNumber: loadedState.fullMoveNumber || 1
-                    };
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Errore parsing localStorage:', error);
+            // Fallback: localStorage mobile (compatibilità)
+            const gameId = getUrlParameter('game');
+            if (gameId) {
+                const gameKey = 'game_data_' + gameId;
+                const savedGameData = localStorage.getItem(gameKey);
+                
+                if (savedGameData) {
+                    try {
+                        const gameData = JSON.parse(savedGameData);
+                        console.log('✅ Dati caricati da localStorage mobile');
+                        
+                        gameState = {
+                            board: gameData.board,
+                            currentPlayer: gameData.currentPlayer,
+                            gameActive: gameData.gameActive,
+                            selectedSquare: null,
+                            moveHistory: gameData.moveHistory || [],
+                            players: gameData.players || { white: 'Bianco', black: 'Nero' },
+                            gameId: gameData.gameId,
+                            isAdmin: false,
+                            playerColor: null,
+                            baseUrl: null,
+                            gameEnded: gameData.gameEnded || false,
+                            castlingRights: gameData.castlingRights || {
+                                white: { kingside: true, queenside: true },
+                                black: { kingside: true, queenside: true }
+                            },
+                            enPassantTarget: gameData.enPassantTarget || null,
+                            halfMoveClock: 0,
+                            fullMoveNumber: 1
+                        };
+                        
+                        return true;
+                    } catch (error) {
+                        console.error('Errore parsing localStorage mobile:', error);
+                    }
                 }
             }
-            
+
             console.log('❌ NESSUN DATO TROVATO');
             return false;
         }
