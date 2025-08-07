@@ -984,9 +984,8 @@
         }
 
         function showUpdatedGameLink() {
-            // Dopo ogni mossa, mostra il link aggiornato
+            // Dopo ogni mossa, mostra messaggio di successo senza link duplicato
             if (gameState.gameActive) {
-                const updatedUrl = getGameUrl(gameState.gameId);
                 const currentPlayerName = gameState.players[gameState.currentPlayer];
                 
                 const linkMessage = `
@@ -994,14 +993,20 @@
                         <button onclick="this.parentElement.style.display='none'" style="position: absolute; top: 5px; right: 10px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
                         <h4>🔄 Mossa Effettuata!</h4>
                         <p><strong>Tocca a: ${currentPlayerName}</strong></p>
-                        <p>Condividi questo link aggiornato per far vedere la tua mossa:</p>
-                        <input type="text" value="${updatedUrl}" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#d4edda; border:1px solid #c3e6cb; border-radius:4px;">
-                        <button class="btn" onclick="copyToClipboard('${updatedUrl.replace(/'/g, "\\'")}')">📋 Copia Link</button>
-                        <p><em>💡 L'avversario deve aprire questo nuovo link per vedere la tua mossa!</em></p>
+                        <p>🔗 Il link aggiornato è già visibile nella sezione blu sopra!</p>
+                        <p><em>💡 Condividi il link dalla sezione blu per far giocare l'avversario</em></p>
                     </div>
                 `;
                 
                 document.getElementById('game-status').innerHTML = linkMessage;
+                
+                // Auto-rimuovi il messaggio dopo 5 secondi
+                setTimeout(() => {
+                    const statusElement = document.getElementById('game-status');
+                    if (statusElement && statusElement.innerHTML.includes('Mossa Effettuata')) {
+                        statusElement.innerHTML = '';
+                    }
+                }, 5000);
             }
         }
 
@@ -1159,12 +1164,19 @@
             
             document.getElementById('current-turn').textContent = turnInfo;
             
+            // DEBUG: Mostra sempre lo stato nella console
+            console.log('=== STATO CORRENTE ===');
+            console.log('currentPlayer:', gameState.currentPlayer);
+            console.log('myPlayerColor:', gameState.playerColor);  
+            console.log('isMyTurn:', gameState.playerColor === gameState.currentPlayer);
+            console.log('canMove:', canPlayerMove());
+            
             if (gameState.gameEnded) {
                 document.getElementById('game-status').innerHTML = '<div class="status-message status-warning">Partita terminata</div>';
             } else if (!canPlayerMove() && gameState.playerColor) {
                 document.getElementById('game-status').innerHTML = '<div class="status-message status-warning">Non è il tuo turno, attendi che giochi l\'avversario</div>';
             } else {
-                // Pulisci eventuali messaggi di avviso precedenti
+                // Pulisci eventuali messaggi di avviso precedenti se è il tuo turno
                 const currentStatus = document.getElementById('game-status').innerHTML;
                 if (currentStatus.includes('Non è il tuo turno') || currentStatus.includes('Puoi muovere solo')) {
                     document.getElementById('game-status').innerHTML = '';
@@ -1268,7 +1280,7 @@
             return false;
         }
 
-        // Inizializzazione applicazione
+        // Inizializzazione applicazione  
         function initializeApp() {
             // Controlla se c'è un link di partita nell'URL
             const gameId = getUrlParameter('game');
@@ -1286,33 +1298,19 @@
                     
                     if (gameLoaded && gameState.gameId === gameId && gameState.gameActive) {
                         
-                        // LOGICA CORRETTA: Chi apre il link?
+                        // NUOVA LOGICA: Chi deve giocare ora?
                         console.log('=== DETERMINAZIONE RUOLO ===');
+                        console.log('currentPlayer dalla partita:', gameState.currentPlayer);
                         
-                        // Controlla se l'utente era già admin di questa partita
-                        const savedState = localStorage.getItem('chessGameState');
-                        let wasAdminOfThisGame = false;
-                        
-                        if (savedState) {
-                            try {
-                                const saved = JSON.parse(savedState);
-                                wasAdminOfThisGame = saved.isAdmin && saved.gameId === gameId;
-                                console.log('Era admin di questa partita:', wasAdminOfThisGame);
-                            } catch (e) {
-                                console.log('Errore nel controllare stato salvato:', e);
-                            }
-                        }
-                        
-                        if (wasAdminOfThisGame) {
-                            // L'admin che torna alla sua partita → BIANCO
+                        // LOGICA SEMPLICE: Se è il turno del bianco → chi apre è bianco
+                        if (gameState.currentPlayer === 'white') {
                             gameState.playerColor = 'white';
                             gameState.isAdmin = true;
-                            console.log('🎯 ADMIN CHE TORNA: Assegnato colore BIANCO');
+                            console.log('🎯 È IL TURNO DEL BIANCO: Assegnato BIANCO/Admin');
                         } else {
-                            // Nuovo invitato → NERO  
-                            gameState.playerColor = 'black';
+                            gameState.playerColor = 'black';  
                             gameState.isAdmin = false;
-                            console.log('🎯 NUOVO INVITATO: Assegnato colore NERO');
+                            console.log('🎯 È IL TURNO DEL NERO: Assegnato NERO/Invitato');
                         }
                         
                         console.log('Final state - isAdmin:', gameState.isAdmin, 'playerColor:', gameState.playerColor);
@@ -1321,23 +1319,17 @@
                     } else {
                         // Partita non trovata o non valida
                         console.log('=== ERRORE CARICAMENTO ===');
-                        console.log('gameLoaded:', gameLoaded);
-                        console.log('gameId match:', gameState.gameId === gameId);
-                        console.log('gameActive:', gameState.gameActive);
                         showScreen('error-screen');
-                        document.getElementById('error-message').textContent = `Link partita non valido. 
-                        Debug: gameLoaded=${gameLoaded}, gameId=${gameState.gameId}, expected=${gameId}, active=${gameState.gameActive}`;
+                        document.getElementById('error-message').textContent = 'Link partita non valido o partita non trovata.';
                     }
                 }, 1000);
             } else {
-                // Accesso diretto alla homepage - carica stato esistente se disponibile
+                // Accesso diretto alla homepage
                 const gameLoaded = loadGameState();
                 
                 if (gameLoaded && gameState.isAdmin) {
-                    // Se era già loggato come admin, vai al pannello admin
                     showAdminPanel();
                 } else {
-                    // Altrimenti mostra login admin
                     gameState.isAdmin = false;
                     showScreen('admin-login');
                 }
