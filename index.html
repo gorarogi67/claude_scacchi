@@ -1300,20 +1300,29 @@
                         
                         // NUOVA LOGICA: Chi deve giocare ora?
                         console.log('=== DETERMINAZIONE RUOLO ===');
-                        console.log('currentPlayer dalla partita:', gameState.currentPlayer);
+                        console.log('🔥 currentPlayer caricato dai dati:', gameState.currentPlayer);
                         
                         // LOGICA SEMPLICE: Se è il turno del bianco → chi apre è bianco
                         if (gameState.currentPlayer === 'white') {
                             gameState.playerColor = 'white';
                             gameState.isAdmin = true;
                             console.log('🎯 È IL TURNO DEL BIANCO: Assegnato BIANCO/Admin');
+                            console.log('🔥 playerColor impostato a:', gameState.playerColor);
+                            console.log('🔥 isAdmin impostato a:', gameState.isAdmin);
                         } else {
                             gameState.playerColor = 'black';  
                             gameState.isAdmin = false;
                             console.log('🎯 È IL TURNO DEL NERO: Assegnato NERO/Invitato');
+                            console.log('🔥 playerColor impostato a:', gameState.playerColor);
+                            console.log('🔥 isAdmin impostato a:', gameState.isAdmin);
                         }
                         
-                        console.log('Final state - isAdmin:', gameState.isAdmin, 'playerColor:', gameState.playerColor);
+                        console.log('=== STATO FINALE PRIMA DI SHOWGAME ===');
+                        console.log('currentPlayer:', gameState.currentPlayer);
+                        console.log('playerColor:', gameState.playerColor);
+                        console.log('isAdmin:', gameState.isAdmin);
+                        console.log('canPlayerMove will be:', gameState.playerColor === gameState.currentPlayer);
+                        
                         showGame();
                         
                     } else {
@@ -1345,18 +1354,16 @@
             
             if (urlGameData) {
                 console.log('Lunghezza data raw:', urlGameData.length);
-                console.log('Primi 200 caratteri data:', urlGameData.substring(0, 200));
                 
                 try {
                     console.log('Tentativo di decodificare...');
                     const decodedData = JSON.parse(decodeURIComponent(urlGameData));
                     console.log('=== DATI DECODIFICATI CON SUCCESSO ===');
                     console.log('gameId:', decodedData.gameId);
-                    console.log('currentPlayer nei dati:', decodedData.currentPlayer);
+                    console.log('🔥 currentPlayer NEI DATI:', decodedData.currentPlayer);
                     console.log('gameActive nei dati:', decodedData.gameActive);
                     console.log('Numero di mosse nei dati:', decodedData.moveHistory ? decodedData.moveHistory.length : 0);
-                    console.log('Board definita:', !!decodedData.board);
-                    console.log('Primi 8 pezzi board:', decodedData.board ? decodedData.board.slice(0, 8) : 'N/A');
+                    console.log('Ultima mossa:', decodedData.moveHistory ? decodedData.moveHistory[decodedData.moveHistory.length - 1] : 'nessuna');
                     
                     gameState = {
                         board: decodedData.board,
@@ -1380,15 +1387,11 @@
                     };
                     
                     console.log('=== STATO CARICATO ===');
-                    console.log('gameState.currentPlayer:', gameState.currentPlayer);
-                    console.log('gameState.gameActive:', gameState.gameActive);
-                    console.log('gameState.moveHistory.length:', gameState.moveHistory.length);
+                    console.log('🔥 gameState.currentPlayer DOPO CARICAMENTO:', gameState.currentPlayer);
                     return true;
                 } catch (error) {
                     console.error('=== ERRORE PARSING DATI URL ===');
                     console.error('Errore:', error);
-                    console.error('Tipo di errore:', error.name);
-                    console.error('Messaggio:', error.message);
                 }
             } else {
                 console.log('Parametro data non trovato nell\'URL');
@@ -1401,17 +1404,16 @@
                 const loadedState = JSON.parse(saved);
                 console.log('Dati trovati in localStorage');
                 
-                // Carica SOLO i dati della partita, ignora isAdmin e playerColor
                 gameState = {
                     board: loadedState.board,
                     currentPlayer: loadedState.currentPlayer,
                     gameActive: loadedState.gameActive,
-                    selectedSquare: null, // Reset selezione
+                    selectedSquare: null,
                     moveHistory: loadedState.moveHistory || [],
                     players: loadedState.players || { white: 'Bianco', black: 'Nero' },
                     gameId: loadedState.gameId,
-                    isAdmin: false, // FORZA false per i link
-                    playerColor: null, // Verrà impostato dopo
+                    isAdmin: false,
+                    playerColor: null,
                     baseUrl: loadedState.baseUrl,
                     gameEnded: loadedState.gameEnded || false,
                     castlingRights: loadedState.castlingRights || {
