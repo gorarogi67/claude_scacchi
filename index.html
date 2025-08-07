@@ -352,6 +352,35 @@
             border-color: #667eea;
             transform: scale(1.1);
         }
+
+        /* Nuovo stile per link corti Firebase */
+        .firebase-info {
+            background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .connection-online {
+            background: #28a745;
+            color: white;
+        }
+
+        .connection-offline {
+            background: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -360,21 +389,25 @@
         <div id="admin-login" class="screen active">
             <h1>🏰 Chess Host</h1>
             <h2>Accesso Amministratore</h2>
+            <div class="firebase-info">
+                <strong>🚀 Versione Firebase!</strong><br>
+                URL Super-Corti • Partite Permanenti • Cross-Device
+            </div>
             <div class="form-group">
                 <label for="admin-password">Password Amministratore:</label>
                 <input type="password" id="admin-password" placeholder="Inserisci la password">
             </div>
             <button class="btn" onclick="adminLogin()">Accedi</button>
             <div id="login-message"></div>
+            <div class="connection-status" id="firebase-status">🔗 Connessione Firebase...</div>
         </div>
 
         <!-- Pannello Controllo Amministratore -->
         <div id="admin-panel" class="screen">
             <h1>🎮 Pannello Amministratore</h1>
-            <div class="form-group">
-                <label for="base-url">URL della tua applicazione pubblicata:</label>
-                <input type="url" id="base-url" placeholder="https://tuosito.com/chess-host.html" value="">
-                <small style="color: #666; font-size: 12px;">💡 Inserisci l'URL completo dove hai pubblicato questa pagina</small>
+            <div class="firebase-info">
+                <strong>🔥 Firebase Attivo!</strong><br>
+                <span id="firebase-connection">Controllo connessione...</span>
             </div>
             <div class="form-group">
                 <label for="white-player">Nome Giocatore Bianco:</label>
@@ -394,20 +427,18 @@
         <!-- Schermata Partita -->
         <div id="game-screen" class="screen">
             <h1>♔ Chess Host</h1>
-            <div class="status-message status-success" style="margin-bottom: 15px;">
-                <small>
-                    <strong>🚀 Link Super-Compatti!</strong> Ora i link sono cortissimi e funzionano perfettamente su tutti i dispositivi!
-                    <br><strong>📖 Come Giocare:</strong> Fai la tua mossa → Copia il link compatto → Invia all'avversario → L'avversario apre il nuovo link
-                </small>
+            <div class="firebase-info">
+                <strong>🚀 Link Super-Corto Firebase!</strong><br>
+                <small>Partita permanente • Sincronizzazione real-time • Cross-device</small>
             </div>
             
             <!-- Link Corrente sempre visibile -->
             <div class="game-info" id="current-link-display" style="background: #e7f3ff; border: 2px solid #007bff;">
-                <h4 style="margin: 0 0 10px 0; color: #007bff;">🔗 Link Partita Compatto</h4>
+                <h4 style="margin: 0 0 10px 0; color: #007bff;">🔗 Link Partita</h4>
                 <input type="text" id="current-game-url" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#ffffff; border:1px solid #007bff; border-radius:4px;">
-                <button class="btn" onclick="copyCurrentLink()" style="background: #007bff;">📋 Copia Link Compatto</button>
-                <p style="margin: 5px 0 0 0; color: #555;"><em>🚀 Link super-corto che funziona su tutti i dispositivi!</em></p>
-                <small style="color: #666;" id="url-length-info"></small>
+                <button class="btn" onclick="copyCurrentLink()" style="background: #007bff;">📋 Copia Link</button>
+                <p style="margin: 5px 0 0 0; color: #555;" id="url-info"><em>🚀 URL corto che funziona per sempre!</em></p>
+                <div class="connection-status" id="game-firebase-status">🔗 Stato connessione...</div>
             </div>
 
             <div class="player-names">
@@ -437,7 +468,8 @@
         <div id="loading-screen" class="screen">
             <div class="loading">
                 <div class="spinner"></div>
-                <p>Caricamento partita in corso...</p>
+                <p>Caricamento partita da Firebase...</p>
+                <p><small>Connessione database in corso...</small></p>
             </div>
         </div>
 
@@ -472,8 +504,61 @@
                 <p><small>💡 La Regina è il pezzo più potente, ma ogni pezzo ha i suoi vantaggi!</small></p>
             </div>
         </div>
-
     </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6imkgB2bRtUv113tDGFWdeNl-fWq_Oc8",
+            authDomain: "scacchi-e4ae1.firebaseapp.com",
+            databaseURL: "https://scacchi-e4ae1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "scacchi-e4ae1",
+            storageBucket: "scacchi-e4ae1.firebasestorage.app",
+            messagingSenderId: "655013026025",
+            appId: "1:655013026025:web:a97e5bf05c7f2e25ba7878"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Rendi Firebase disponibile globalmente
+        window.firebaseApp = app;
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseGet = get;
+        window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
+
+        // Test connessione Firebase
+        const testRef = ref(database, '.info/connected');
+        onValue(testRef, (snapshot) => {
+            const connected = snapshot.val();
+            updateFirebaseStatus(connected);
+            console.log('Firebase Status:', connected ? 'Connected' : 'Disconnected');
+        });
+
+        function updateFirebaseStatus(connected) {
+            const statusElements = document.querySelectorAll('[id*="firebase-status"], #firebase-connection');
+            statusElements.forEach(element => {
+                if (connected) {
+                    element.textContent = '🟢 Firebase Online';
+                    element.className = 'connection-status connection-online';
+                } else {
+                    element.textContent = '🔴 Firebase Offline';
+                    element.className = 'connection-status connection-offline';
+                }
+            });
+        }
+
+        console.log('🔥 Firebase inizializzato con successo!');
+    </script>
 
     <script>
         // Configurazione
@@ -489,8 +574,7 @@
             players: { white: 'Bianco', black: 'Nero' },
             gameId: null,
             isAdmin: false,
-            playerColor: null, // 'white', 'black', o null per admin
-            baseUrl: null, // URL base dell'applicazione pubblicata
+            playerColor: null,
             gameEnded: false,
             castlingRights: {
                 white: { kingside: true, queenside: true },
@@ -500,6 +584,9 @@
             halfMoveClock: 0,
             fullMoveNumber: 1
         };
+
+        // Firebase listener attivo
+        let currentGameListener = null;
 
         // Pezzi degli scacchi Unicode
         const chessPieces = {
@@ -531,6 +618,139 @@
             ];
         }
 
+        // FIREBASE FUNCTIONS
+        async function saveGameToFirebase() {
+            if (!gameState.gameId || !window.firebaseDatabase) {
+                console.error('Game ID o Firebase non disponibili');
+                return false;
+            }
+
+            try {
+                const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameState.gameId);
+                
+                // Prepara dati ottimizzati per Firebase
+                const firebaseData = {
+                    board: gameState.board,
+                    currentPlayer: gameState.currentPlayer,
+                    gameActive: gameState.gameActive,
+                    moveHistory: gameState.moveHistory,
+                    players: gameState.players,
+                    gameEnded: gameState.gameEnded,
+                    castlingRights: gameState.castlingRights,
+                    enPassantTarget: gameState.enPassantTarget,
+                    lastUpdate: Date.now()
+                };
+
+                await window.firebaseSet(gameRef, firebaseData);
+                console.log('🔥 Partita salvata su Firebase:', gameState.gameId);
+                return true;
+            } catch (error) {
+                console.error('Errore salvataggio Firebase:', error);
+                showMessage('game-status', 'Errore di connessione al database', 'error');
+                return false;
+            }
+        }
+
+        async function loadGameFromFirebase(gameId) {
+            if (!gameId || !window.firebaseDatabase) {
+                console.error('Game ID o Firebase non disponibili');
+                return false;
+            }
+
+            try {
+                const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameId);
+                const snapshot = await window.firebaseGet(gameRef);
+                
+                if (snapshot.exists()) {
+                    const firebaseData = snapshot.val();
+                    console.log('🔥 Partita caricata da Firebase:', gameId);
+                    
+                    // Aggiorna gameState con i dati Firebase
+                    gameState.board = firebaseData.board;
+                    gameState.currentPlayer = firebaseData.currentPlayer;
+                    gameState.gameActive = firebaseData.gameActive;
+                    gameState.moveHistory = firebaseData.moveHistory || [];
+                    gameState.players = firebaseData.players || { white: 'Bianco', black: 'Nero' };
+                    gameState.gameEnded = firebaseData.gameEnded || false;
+                    gameState.castlingRights = firebaseData.castlingRights || {
+                        white: { kingside: true, queenside: true },
+                        black: { kingside: true, queenside: true }
+                    };
+                    gameState.enPassantTarget = firebaseData.enPassantTarget || null;
+                    gameState.gameId = gameId;
+                    
+                    return true;
+                } else {
+                    console.error('Partita non trovata su Firebase:', gameId);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Errore caricamento Firebase:', error);
+                return false;
+            }
+        }
+
+        function setupGameListener(gameId) {
+            if (!gameId || !window.firebaseDatabase) return;
+            
+            // Rimuovi listener precedente se esiste
+            if (currentGameListener) {
+                window.firebaseOff(currentGameListener);
+            }
+
+            // Nuovo listener per sincronizzazione real-time
+            const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameId);
+            currentGameListener = gameRef;
+            
+            window.firebaseOnValue(gameRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const firebaseData = snapshot.val();
+                    
+                    // Evita loop infiniti - controlla se è un aggiornamento esterno
+                    if (firebaseData.lastUpdate && firebaseData.lastUpdate !== gameState.lastUpdate) {
+                        console.log('📡 Sincronizzazione real-time ricevuta');
+                        
+                        // Aggiorna stato locale
+                        gameState.board = firebaseData.board;
+                        gameState.currentPlayer = firebaseData.currentPlayer;
+                        gameState.gameActive = firebaseData.gameActive;
+                        gameState.moveHistory = firebaseData.moveHistory || [];
+                        gameState.gameEnded = firebaseData.gameEnded || false;
+                        gameState.castlingRights = firebaseData.castlingRights || gameState.castlingRights;
+                        gameState.enPassantTarget = firebaseData.enPassantTarget || null;
+                        gameState.lastUpdate = firebaseData.lastUpdate;
+                        
+                        // Aggiorna interfaccia
+                        if (document.getElementById('game-screen').classList.contains('active')) {
+                            renderBoard();
+                            updateGameInfo();
+                            updateMovesHistory();
+                            updateCurrentGameLink();
+                            
+                            // Notifica mossa avversario
+                            if (gameState.playerColor && gameState.currentPlayer !== gameState.playerColor) {
+                                showMessage('game-status', '🔄 L\'avversario ha fatto una mossa!', 'success');
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Genera URL corto con solo ID partita
+        function getGameUrl(gameId) {
+            console.log('=== GENERAZIONE URL CORTO FIREBASE ===');
+            console.log('Game ID:', gameId);
+            
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shortUrl = baseUrl + '?game=' + gameId;
+            
+            console.log('URL Firebase (corto):', shortUrl);
+            console.log('Lunghezza:', shortUrl.length, 'caratteri');
+            
+            return shortUrl;
+        }
+
         // Funzioni di utilità
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
@@ -554,111 +774,10 @@
         }
 
         function generateGameId() {
-            return 'game_' + Math.random().toString(36).substr(2, 16) + Date.now().toString(36);
+            // ID più corto e leggibile
+            return Math.random().toString(36).substr(2, 8).toUpperCase();
         }
 
-        function getGameUrl(gameId) {
-            console.log('=== GENERAZIONE LINK COMPATTO ===');
-            
-            // Dati MINIMI necessari - solo lo stato essenziale  
-            const compactData = {
-                id: gameState.gameId,
-                p: gameState.players,
-                b: boardToCompactString(gameState.board),
-                c: gameState.currentPlayer[0], // 'w' o 'b' invece di 'white'/'black'  
-                m: gameState.moveHistory.length, // Solo il numero di mosse
-                a: gameState.gameActive,
-                e: gameState.gameEnded
-            };
-
-            console.log('Dati originali:', {
-                gameId: gameState.gameId,
-                players: gameState.players,  
-                currentPlayer: gameState.currentPlayer,
-                moves: gameState.moveHistory.length
-            });
-
-            console.log('Dati compatti:', compactData);
-
-            // Codifica compatta in Base64
-            const jsonString = JSON.stringify(compactData);
-            const base64Data = btoa(jsonString);
-            
-            console.log('JSON length:', jsonString.length);
-            console.log('Base64 length:', base64Data.length);
-
-            const baseUrl = getBaseUrl();
-            const shortUrl = baseUrl + '?g=' + base64Data;
-            
-            console.log('URL finale length:', shortUrl.length);
-            console.log('URL finale:', shortUrl);
-
-            return shortUrl;
-        }
-
-        // Converte la board in una stringa compatta
-        function boardToCompactString(board) {
-            let compact = '';
-            for (let i = 0; i < 64; i++) {
-                if (board[i]) {
-                    const [color, piece] = board[i];
-                    // w=white, b=black + prima lettera del pezzo  
-                    compact += (color[0] + piece[0]).toUpperCase();
-                } else {
-                    compact += '..'; // Casella vuota
-                }
-            }
-            return compact;
-        }
-
-        // Converte la stringa compatta in board
-        function compactStringToBoard(compactString) {
-            const board = new Array(64).fill(null);
-            
-            for (let i = 0; i < 64; i++) {
-                const pos = i * 2;
-                if (pos < compactString.length - 1) {
-                    const piece = compactString.substr(pos, 2);
-                    if (piece !== '..') {
-                        const color = piece[0].toLowerCase() === 'w' ? 'white' : 'black';
-                        let pieceType = '';
-                        
-                        switch (piece[1].toLowerCase()) {
-                            case 'k': pieceType = 'king'; break;
-                            case 'q': pieceType = 'queen'; break;
-                            case 'r': pieceType = 'rook'; break;
-                            case 'b': pieceType = 'bishop'; break;
-                            case 'n': pieceType = 'knight'; break;
-                            case 'p': pieceType = 'pawn'; break;
-                        }
-                        
-                        if (pieceType) {
-                            board[i] = [color, pieceType];
-                        }
-                    }
-                }
-            }
-            
-            return board;
-        }
-
-        function getBaseUrl() {
-            // Prima prova a usare l'URL del form di input
-            const customUrl = document.getElementById('base-url')?.value;
-            if (customUrl && customUrl.trim()) {
-                return customUrl.trim().replace(/\/$/, '');
-            }
-            
-            // Poi prova a usare l'URL salvato nello stato
-            if (gameState.baseUrl) {
-                return gameState.baseUrl.replace(/\/$/, '');
-            }
-            
-            // Fallback all'URL corrente 
-            return window.location.origin + window.location.pathname;
-        }
-
-        // Gestione URL e parametri
         function getUrlParameter(name) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(name);
@@ -669,8 +788,8 @@
             const password = document.getElementById('admin-password').value;
             if (password === ADMIN_PASSWORD) {
                 gameState.isAdmin = true;
-                gameState.playerColor = null; // Reset del colore per admin
-                saveGameState(); // Salva lo stato admin
+                gameState.playerColor = null;
+                localStorage.setItem('chessAdminAuth', 'true');
                 showAdminPanel();
                 showMessage('login-message', 'Accesso effettuato con successo!', 'success');
             } else {
@@ -681,7 +800,7 @@
         function logout() {
             gameState.isAdmin = false;
             gameState.playerColor = null;
-            saveGameState();
+            localStorage.removeItem('chessAdminAuth');
             showScreen('admin-login');
             document.getElementById('admin-password').value = '';
         }
@@ -689,26 +808,11 @@
         // Pannello amministratore
         function showAdminPanel() {
             showScreen('admin-panel');
-            
-            // Ricarica l'URL base salvato se esiste
-            if (gameState.baseUrl) {
-                document.getElementById('base-url').value = gameState.baseUrl;
-            } else {
-                // Suggerisci l'URL corrente come default
-                const currentUrl = window.location.href.split('?')[0];
-                document.getElementById('base-url').placeholder = currentUrl;
-            }
         }
 
-        function createGame() {
-            const baseUrl = document.getElementById('base-url').value.trim();
+        async function createGame() {
             const whiteName = document.getElementById('white-player').value || 'Bianco';
             const blackName = document.getElementById('black-player').value || 'Nero';
-
-            if (!baseUrl) {
-                showMessage('admin-message', '⚠️ Inserisci l\'URL dove hai pubblicato l\'applicazione!', 'error');
-                return;
-            }
 
             // Crea nuova partita
             gameState.gameId = generateGameId();
@@ -726,29 +830,39 @@
                 black: { kingside: true, queenside: true }
             };
             gameState.enPassantTarget = null;
+            gameState.lastUpdate = Date.now();
 
-            // Salva stato partita e URL base
-            gameState.baseUrl = baseUrl;
-            saveGameState();
-
-            // Mostra il link da condividere
-            const gameUrl = getGameUrl(gameState.gameId);
-            showGameLink(gameUrl, whiteName, blackName);
+            // Salva su Firebase
+            const saved = await saveGameToFirebase();
+            
+            if (saved) {
+                // Setup real-time listener
+                setupGameListener(gameState.gameId);
+                
+                // Mostra il link da condividere
+                const gameUrl = getGameUrl(gameState.gameId);
+                showGameLink(gameUrl, whiteName, blackName);
+            } else {
+                showMessage('admin-message', 'Errore nella creazione della partita. Controlla la connessione Firebase.', 'error');
+            }
         }
 
         function showGameLink(gameUrl, whiteName, blackName) {
+            const urlLength = gameUrl.length;
+            
             const linkMessage = `
                 <div class="status-message status-success">
                     <h4>🎉 Partita Creata!</h4>
+                    <p><strong>🔥 Firebase Attivato!</strong></p>
                     <p><strong>Giocatori:</strong></p>
                     <p>• Bianco: ${whiteName} (Tu - Admin)</p>
                     <p>• Nero: ${blackName} (Avversario)</p>
                     <div class="game-link">
-                        <strong>Link per l'avversario:</strong><br>
+                        <strong>🚀 Link Super-Corto (${urlLength} caratteri):</strong><br>
                         <input type="text" value="${gameUrl}" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#f8f9fa; border:1px solid #ddd; border-radius:4px;">
                     </div>
                     <p><em>💡 Copia il link sopra e invialo all'avversario.</em></p>
-                    <p><em>🧪 Per testare: apri il link in <strong>modalità incognito</strong> o in un <strong>browser diverso</strong></em></p>
+                    <p><em>✨ La partita si sincronizza automaticamente su tutti i dispositivi!</em></p>
                     <button class="btn" onclick="showGame()" style="margin-top:10px;">Inizia a Giocare (come Bianco)</button>
                 </div>
             `;
@@ -756,30 +870,51 @@
             showMessage('admin-message', linkMessage, 'success');
         }
 
-        function showGameIfExists() {
-            if (gameState.gameActive) {
-                // L'admin ha accesso alla partita con il colore bianco
-                gameState.playerColor = 'white';
-                gameState.isAdmin = true;
-                showGame();
+        async function showGameIfExists() {
+            if (gameState.gameActive && gameState.gameId) {
+                // Ricarica dalla Firebase per essere sicuri
+                const loaded = await loadGameFromFirebase(gameState.gameId);
+                if (loaded) {
+                    gameState.playerColor = 'white';
+                    gameState.isAdmin = true;
+                    setupGameListener(gameState.gameId);
+                    showGame();
+                } else {
+                    showMessage('admin-message', 'Errore nel caricamento della partita da Firebase!', 'error');
+                }
             } else {
                 showMessage('admin-message', 'Nessuna partita attiva!', 'warning');
             }
         }
 
-        function resetGame() {
-            // Solo l'admin può resettare
+        async function resetGame() {
             if (!gameState.isAdmin) {
                 showMessage('game-status', 'Solo l\'amministratore può resettare la partita!', 'error');
                 return;
             }
 
             if (confirm('Sei sicuro di voler resettare la partita? Tutti i dati verranno cancellati.')) {
-                // Cancella stato partita
+                // Rimuovi listener Firebase
+                if (currentGameListener) {
+                    window.firebaseOff(currentGameListener);
+                    currentGameListener = null;
+                }
+
+                // Cancella da Firebase se esiste un gameId
+                if (gameState.gameId && window.firebaseDatabase) {
+                    try {
+                        const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameState.gameId);
+                        await window.firebaseSet(gameRef, null); // Cancella il nodo
+                        console.log('🔥 Partita cancellata da Firebase');
+                    } catch (error) {
+                        console.error('Errore cancellazione Firebase:', error);
+                    }
+                }
+                
+                // Cancella stato locale
                 localStorage.removeItem('chessGameState');
                 
-                // Reset stato globale preservando admin status e URL base
-                const savedBaseUrl = gameState.baseUrl;
+                // Reset stato globale preservando admin status
                 gameState = {
                     board: null,
                     currentPlayer: 'white',
@@ -788,9 +923,8 @@
                     moveHistory: [],
                     players: { white: 'Bianco', black: 'Nero' },
                     gameId: null,
-                    isAdmin: true, // Mantiene admin
+                    isAdmin: true,
                     playerColor: null,
-                    baseUrl: savedBaseUrl,
                     gameEnded: false,
                     castlingRights: {
                         white: { kingside: true, queenside: true },
@@ -818,14 +952,6 @@
                 gameState.playerColor = 'white';
             }
 
-            // DEBUG: Log dello stato per capire il problema
-            console.log('=== STATO PARTITA ===');
-            console.log('isAdmin:', gameState.isAdmin);
-            console.log('playerColor:', gameState.playerColor);
-            console.log('currentPlayer:', gameState.currentPlayer);
-            console.log('gameActive:', gameState.gameActive);
-            console.log('canPlayerMove:', canPlayerMove());
-
             showScreen('game-screen');
             document.getElementById('white-name').textContent = gameState.players.white;
             document.getElementById('black-name').textContent = gameState.players.black;
@@ -834,7 +960,6 @@
             if (gameState.isAdmin) {
                 document.getElementById('admin-controls').style.display = 'block';
             } else {
-                // Nascondi controlli admin per i giocatori normali
                 document.getElementById('admin-controls').style.display = 'none';
             }
 
@@ -844,16 +969,6 @@
             renderBoard();
             updateGameInfo();
             updateMovesHistory();
-        }
-
-        function updateAdminGameLink() {
-            if (gameState.isAdmin && gameState.gameActive) {
-                const currentUrl = getGameUrl(gameState.gameId);
-                const linkField = document.getElementById('admin-game-link');
-                if (linkField) {
-                    linkField.value = currentUrl;
-                }
-            }
         }
 
         function renderBoard() {
@@ -891,19 +1006,11 @@
 
             // Controlla se il giocatore può fare mosse
             if (!canPlayerMove()) {
-                const debugInfo = `
-                    DEBUG INFO:
-                    - Il tuo colore: ${gameState.playerColor}
-                    - Turno corrente: ${gameState.currentPlayer}
-                    - Sei admin: ${gameState.isAdmin}
-                    - Partita attiva: ${gameState.gameActive}
-                `;
-                console.log(debugInfo);
-                showMessage('game-status', `Non è il tuo turno! ${debugInfo}`, 'error');
+                showMessage('game-status', 'Non è il tuo turno! Attendi che giochi l\'avversario.', 'warning');
                 return;
             }
 
-            // Rimuovi evidenziazioni precedenti (sia mosse che catture)
+            // Rimuovi evidenziazioni precedenti
             document.querySelectorAll('.square').forEach(sq => {
                 sq.classList.remove('selected', 'possible-move', 'possible-capture');
             });
@@ -944,14 +1051,7 @@
         }
 
         function canPlayerMove() {
-            // Ogni giocatore (anche l'admin) può muovere solo nel proprio turno
-            console.log('canPlayerMove check:', {
-                playerColor: gameState.playerColor,
-                currentPlayer: gameState.currentPlayer,
-                result: gameState.playerColor === gameState.currentPlayer
-            });
-            
-            if (!gameState.playerColor) return false; // Nessun colore assegnato
+            if (!gameState.playerColor) return false;
             return gameState.playerColor === gameState.currentPlayer;
         }
 
@@ -967,22 +1067,20 @@
                 const isCapture = isCapturingMove(fromIndex, toIndex, piece, targetPiece);
                 
                 if (isCapture) {
-                    // Cattura: effetto fiamma rosso 🔥
                     squareElement.classList.add('possible-capture');
                 } else {
-                    // Mossa normale: bordo verde
                     squareElement.classList.add('possible-move');
                 }
             });
         }
 
         function isCapturingMove(fromIndex, toIndex, piece, targetPiece) {
-            // Cattura diretta: c'è un pezzo avversario sulla casella di destinazione
+            // Cattura diretta
             if (targetPiece && targetPiece[0] !== piece[0]) {
                 return true;
             }
             
-            // En passant: pedone che cattura diagonalmente su casella vuota
+            // En passant
             if (piece[1] === 'pawn' && gameState.enPassantTarget === toIndex) {
                 return true;
             }
@@ -1036,21 +1134,19 @@
             }
         }
 
+        // [Continuano tutte le funzioni di validazione mosse - identiche a prima...]
         function isValidPawnMove(from, to, color, rowDiff, colDiff, targetPiece) {
             const direction = color === 'white' ? -1 : 1;
             const startRow = color === 'white' ? 6 : 1;
             const fromRow = Math.floor(from / 8);
 
-            // Movimento in avanti
             if (colDiff === 0 && !targetPiece) {
                 if (rowDiff === direction) return true;
                 if (fromRow === startRow && rowDiff === 2 * direction) return true;
             }
             
-            // Cattura diagonale
             if (Math.abs(colDiff) === 1 && rowDiff === direction) {
                 if (targetPiece) return true;
-                // En passant
                 if (gameState.enPassantTarget === to) return true;
             }
 
@@ -1078,12 +1174,10 @@
         }
 
         function isValidKingMove(from, to, color, rowDiff, colDiff) {
-            // Movimento normale del re
             if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) {
                 return true;
             }
             
-            // Arrocco
             if (rowDiff === 0 && Math.abs(colDiff) === 2) {
                 return canCastle(color, colDiff > 0);
             }
@@ -1096,16 +1190,13 @@
             const kingPos = row * 8 + 4;
             const rookPos = kingside ? row * 8 + 7 : row * 8;
 
-            // Controlla diritti di arrocco
             if (!gameState.castlingRights[color][kingside ? 'kingside' : 'queenside']) {
                 return false;
             }
 
-            // Controlla che re e torre siano in posizione
             if (!gameState.board[kingPos] || gameState.board[kingPos][1] !== 'king') return false;
             if (!gameState.board[rookPos] || gameState.board[rookPos][1] !== 'rook') return false;
 
-            // Controlla che il percorso sia libero
             const startCol = kingside ? 5 : 1;
             const endCol = kingside ? 6 : 3;
             for (let col = startCol; col <= endCol; col++) {
@@ -1138,7 +1229,7 @@
             return true;
         }
 
-        function makeMove(from, to) {
+        async function makeMove(from, to) {
             const piece = gameState.board[from];
             const targetPiece = gameState.board[to];
             const [color, pieceType] = piece;
@@ -1146,7 +1237,6 @@
             console.log('=== MAKING MOVE ===');
             console.log('From:', from, 'To:', to);
             console.log('Piece:', piece);
-            console.log('Current player BEFORE move:', gameState.currentPlayer);
 
             // Salva mossa nella cronologia
             const moveNotation = getMoveNotation(from, to, piece, targetPiece);
@@ -1159,131 +1249,69 @@
             // Aggiorna diritti di arrocco
             updateCastlingRights(from, to, piece);
 
-            // Gestisci mosse speciali (inclusa promozione)
+            // Gestisci mosse speciali
             const hasPromotion = handleSpecialMoves(from, to, piece);
 
             if (hasPromotion) {
-                // Se c'è una promozione, la mossa sarà completata dopo la scelta del pezzo
-                // Il modal è già mostrato, aspettiamo la scelta dell'utente
+                // La promozione sarà completata dopo la scelta dell'utente
                 console.log('Promozione in corso - aspettando scelta utente');
                 return;
             }
 
-            // Se non c'è promozione, completa normalmente la mossa
-            completeMove();
+            // Completa la mossa normalmente
+            await completeMove();
         }
 
-        function showUpdatedGameLink() {
-            // Dopo ogni mossa, mostra messaggio di successo semplice
-            if (gameState.gameActive) {
-                const currentPlayerName = gameState.players[gameState.currentPlayer];
-                
-                const linkMessage = `
-                    <div class="status-message status-success" style="position: relative;">
-                        <button onclick="this.parentElement.style.display='none'" style="position: absolute; top: 5px; right: 10px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
-                        <h4>🔄 Mossa Effettuata!</h4>
-                        <p><strong>Tocca a: ${currentPlayerName}</strong></p>
-                        <p>🚀 Link compatto aggiornato nella sezione blu sopra!</p>
-                        <p><em>💡 Ora i link sono super-corti e funzionano su tutti i dispositivi!</em></p>
-                    </div>
-                `;
-                
-                document.getElementById('game-status').innerHTML = linkMessage;
-                
-                // Auto-rimuovi il messaggio dopo 5 secondi
-                setTimeout(() => {
-                    const statusElement = document.getElementById('game-status');
-                    if (statusElement && statusElement.innerHTML.includes('Mossa Effettuata')) {
-                        statusElement.innerHTML = '';
-                    }
-                }, 5000);
-            }
-        }
+        async function completeMove() {
+            // Cambia turno
+            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+            gameState.lastUpdate = Date.now();
 
-        function copyToClipboard(text) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    console.log('Link copiato con Clipboard API');
-                }).catch(() => {
-                    console.log('Errore Clipboard API, usando fallback');
-                    fallbackCopyText(text);
-                });
+            // Salva su Firebase
+            const saved = await saveGameToFirebase();
+            
+            if (saved) {
+                renderBoard();
+                updateGameInfo();
+                updateMovesHistory();
+                updateCurrentGameLink();
+                showMessage('game-status', '🔄 Mossa effettuata! Sincronizzazione con Firebase completata.', 'success');
+                checkGameEnd();
             } else {
-                console.log('Clipboard API non supportata, usando fallback');
-                fallbackCopyText(text);
+                showMessage('game-status', 'Errore nel salvare la mossa. Riprova.', 'error');
             }
         }
 
-        function fallbackCopyText(text) {
-            // Fallback per browser più vecchi
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-999999px';
-            textArea.style.top = '-999999px';
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                document.execCommand('copy');
-                console.log('Link copiato con execCommand');
-            } catch (err) {
-                console.error('Errore nella copia:', err);
-            }
-            
-            document.body.removeChild(textArea);
-        }
+        // [Continuano tutte le altre funzioni di supporto - identiche...]
+        function updateCastlingRights(from, to, piece) {
+            const [color, pieceType] = piece;
 
-        function copyCurrentLink() {
-            const linkField = document.getElementById('current-game-url');
-            if (linkField && linkField.value) {
-                copyToClipboard(linkField.value);
-                
-                // Feedback ottimistico per il nuovo sistema
-                let message = '📋 Link compatto copiato negli appunti!';
-                message += '\n\n🚀 Questo link super-corto funziona su tutti i dispositivi: desktop, tablet, smartphone.';
-                
-                // Sostituisci alert con messaggio temporaneo
-                showMessage('game-status', message, 'success');
-                setTimeout(() => {
-                    updateGameInfo(); // Pulisci il messaggio
-                }, 3000);
+            if (pieceType === 'king') {
+                gameState.castlingRights[color].kingside = false;
+                gameState.castlingRights[color].queenside = false;
             }
-        }
 
-        function updateCurrentGameLink() {
-            const linkField = document.getElementById('current-game-url');
-            const lengthInfo = document.getElementById('url-length-info');
-            
-            if (linkField && gameState.gameActive) {
-                const currentUrl = getGameUrl(gameState.gameId);
-                linkField.value = currentUrl;
-                
-                // Mostra info debug sulla lunghezza URL
-                if (lengthInfo) {
-                    const urlLength = currentUrl.length;
-                    
-                    let infoText = `✅ URL Compatto: ${urlLength} caratteri`;
-                    
-                    if (urlLength < 200) {
-                        infoText += ' 🚀 (Super Compatto!)';
-                        lengthInfo.style.color = '#00aa00';
-                    } else if (urlLength < 500) {
-                        infoText += ' ✅ (Compatto)';
-                        lengthInfo.style.color = '#0066cc';
-                    } else {
-                        infoText += ' ⚠️ (Ancora lungo)';
-                        lengthInfo.style.color = '#ff6600';
-                    }
-                    
-                    lengthInfo.textContent = infoText;
+            if (pieceType === 'rook') {
+                const row = color === 'white' ? 7 : 0;
+                if (from === row * 8 + 7) {
+                    gameState.castlingRights[color].kingside = false;
+                }
+                if (from === row * 8) {
+                    gameState.castlingRights[color].queenside = false;
+                }
+            }
+
+            const toRow = Math.floor(to / 8);
+            const toCol = to % 8;
+            if ((toRow === 0 || toRow === 7) && (toCol === 0 || toCol === 7)) {
+                const capturedColor = toRow === 0 ? 'black' : 'white';
+                if (toCol === 0) {
+                    gameState.castlingRights[capturedColor].queenside = false;
+                } else {
+                    gameState.castlingRights[capturedColor].kingside = false;
                 }
             }
         }
-
-        // Variabile per gestire la promozione
-        let promotionData = null;
 
         function handleSpecialMoves(from, to, piece) {
             const [color, pieceType] = piece;
@@ -1297,7 +1325,6 @@
                 const rookFromCol = colDiff > 0 ? 7 : 0;
                 const rookToCol = colDiff > 0 ? 5 : 3;
                 
-                // Sposta la torre
                 gameState.board[row * 8 + rookToCol] = gameState.board[row * 8 + rookFromCol];
                 gameState.board[row * 8 + rookFromCol] = null;
             }
@@ -1308,7 +1335,7 @@
                 gameState.board[capturedPawnRow * 8 + (to % 8)] = null;
             }
 
-            // Imposta target en passant per doppio movimento del pedone
+            // Imposta target en passant
             if (pieceType === 'pawn' && Math.abs(toRow - fromRow) === 2) {
                 gameState.enPassantTarget = fromRow + (toRow - fromRow) / 2;
                 gameState.enPassantTarget = gameState.enPassantTarget * 8 + (to % 8);
@@ -1316,26 +1343,25 @@
                 gameState.enPassantTarget = null;
             }
 
-            // Promozione pedone - ora con scelta!
+            // Promozione pedone
             if (pieceType === 'pawn' && (toRow === 0 || toRow === 7)) {
-                // Salva i dati per la promozione
                 promotionData = {
                     position: to,
                     color: color
                 };
-                
-                // Mostra il modal di scelta
                 showPromotionModal(color);
-                return true; // Indica che c'è una promozione in corso
+                return true;
             }
 
             return false;
         }
 
+        // Variabile per gestire la promozione
+        let promotionData = null;
+
         function showPromotionModal(color) {
             const modal = document.getElementById('promotion-modal');
             
-            // Aggiorna i pezzi nel modal con il colore corretto
             document.getElementById('promotion-queen').textContent = chessPieces[color]['queen'];
             document.getElementById('promotion-rook').textContent = chessPieces[color]['rook'];
             document.getElementById('promotion-bishop').textContent = chessPieces[color]['bishop'];
@@ -1344,73 +1370,15 @@
             modal.classList.add('active');
         }
 
-        function promoteTopiece(pieceType) {
+        async function promoteTopiece(pieceType) {
             if (!promotionData) return;
             
-            // Applica la promozione scelta
             gameState.board[promotionData.position] = [promotionData.color, pieceType];
             
-            // Chiudi il modal
             document.getElementById('promotion-modal').classList.remove('active');
-            
-            // Pulisci i dati di promozione
             promotionData = null;
             
-            // Continua con il resto della mossa (cambio turno, salvataggio, etc.)
-            completeMove();
-        }
-
-        function completeMove() {
-            // Cambia turno
-            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
-
-            // Salva stato e aggiorna interfaccia
-            saveGameState();
-            renderBoard();
-            updateGameInfo();
-            updateMovesHistory();
-
-            // Aggiorna sempre il link corrente visibile
-            updateCurrentGameLink();
-
-            // Mostra messaggio con link aggiornato dopo ogni mossa
-            showUpdatedGameLink();
-
-            // Controlla fine partita
-            checkGameEnd();
-        }
-
-        function updateCastlingRights(from, to, piece) {
-            const [color, pieceType] = piece;
-
-            // Se il re si muove, perde tutti i diritti di arrocco
-            if (pieceType === 'king') {
-                gameState.castlingRights[color].kingside = false;
-                gameState.castlingRights[color].queenside = false;
-            }
-
-            // Se una torre si muove, perde il diritto di arrocco corrispondente
-            if (pieceType === 'rook') {
-                const row = color === 'white' ? 7 : 0;
-                if (from === row * 8 + 7) {
-                    gameState.castlingRights[color].kingside = false;
-                }
-                if (from === row * 8) {
-                    gameState.castlingRights[color].queenside = false;
-                }
-            }
-
-            // Se una torre viene catturata, aggiorna i diritti
-            const toRow = Math.floor(to / 8);
-            const toCol = to % 8;
-            if ((toRow === 0 || toRow === 7) && (toCol === 0 || toCol === 7)) {
-                const capturedColor = toRow === 0 ? 'black' : 'white';
-                if (toCol === 0) {
-                    gameState.castlingRights[capturedColor].queenside = false;
-                } else {
-                    gameState.castlingRights[capturedColor].kingside = false;
-                }
-            }
+            await completeMove();
         }
 
         function getMoveNotation(from, to, piece, targetPiece) {
@@ -1435,7 +1403,6 @@
             const currentPlayerName = gameState.players[gameState.currentPlayer];
             let turnInfo = `Turno di ${currentPlayerName}`;
             
-            // Aggiungi informazione specifica sul ruolo del giocatore
             if (gameState.playerColor) {
                 const myColor = gameState.playerColor === 'white' ? 'Bianco' : 'Nero';
                 const roleInfo = gameState.isAdmin ? ' (Admin)' : ' (Invitato)';
@@ -1449,23 +1416,10 @@
             
             document.getElementById('current-turn').textContent = turnInfo;
             
-            // DEBUG: Mostra sempre lo stato nella console
-            console.log('=== STATO CORRENTE ===');
-            console.log('currentPlayer:', gameState.currentPlayer);
-            console.log('myPlayerColor:', gameState.playerColor);  
-            console.log('isMyTurn:', gameState.playerColor === gameState.currentPlayer);
-            console.log('canMove:', canPlayerMove());
-            
             if (gameState.gameEnded) {
                 document.getElementById('game-status').innerHTML = '<div class="status-message status-warning">Partita terminata</div>';
             } else if (!canPlayerMove() && gameState.playerColor) {
-                document.getElementById('game-status').innerHTML = '<div class="status-message status-warning">Non è il tuo turno, attendi che giochi l\'avversario</div>';
-            } else {
-                // Pulisci eventuali messaggi di avviso precedenti se è il tuo turno
-                const currentStatus = document.getElementById('game-status').innerHTML;
-                if (currentStatus.includes('Non è il tuo turno') || currentStatus.includes('Puoi muovere solo')) {
-                    document.getElementById('game-status').innerHTML = '';
-                }
+                // Non mostra messaggio se non è il proprio turno (evita spam)
             }
         }
 
@@ -1487,13 +1441,46 @@
             movesList.innerHTML = html;
         }
 
-        function checkGameEnd() {
-            // Implementazione semplificata - in una versione completa
-            // si controllerebbero scacco matto, stallo, etc.
-            // Per ora la partita termina solo quando l'admin la conclude
+        function updateCurrentGameLink() {
+            const linkField = document.getElementById('current-game-url');
+            const infoElement = document.getElementById('url-info');
+            
+            if (linkField && gameState.gameActive && gameState.gameId) {
+                const currentUrl = getGameUrl(gameState.gameId);
+                linkField.value = currentUrl;
+                
+                if (infoElement) {
+                    const urlLength = currentUrl.length;
+                    infoElement.innerHTML = `<em>🚀 URL Firebase: ${urlLength} caratteri - Permanente & Cross-device!</em>`;
+                }
+            }
         }
 
-        function endGame(result) {
+        function copyCurrentLink() {
+            const linkField = document.getElementById('current-game-url');
+            if (linkField && linkField.value) {
+                linkField.select();
+                linkField.setSelectionRange(0, 99999); // Per mobile
+                
+                try {
+                    document.execCommand('copy');
+                    showMessage('game-status', '📋 Link Firebase copiato! La partita si sincronizzerà automaticamente.', 'success');
+                } catch (err) {
+                    console.error('Errore copia:', err);
+                    showMessage('game-status', 'Seleziona e copia manualmente il link sopra', 'warning');
+                }
+                
+                setTimeout(() => {
+                    updateGameInfo();
+                }, 3000);
+            }
+        }
+
+        function checkGameEnd() {
+            // Implementazione futura per scacco matto
+        }
+
+        async function endGame(result) {
             if (!gameState.isAdmin) {
                 showMessage('game-status', 'Solo l\'amministratore può terminare la partita!', 'error');
                 return;
@@ -1520,273 +1507,73 @@
             document.getElementById('game-status').innerHTML = 
                 `<div class="status-message status-success">${resultText}</div>`;
             
-            saveGameState();
+            // Salva stato finale su Firebase
+            await saveGameToFirebase();
         }
 
-        // Persistenza dati
-        function saveGameState() {
-            // Salvataggio standard per admin/invitato
-            if (gameState.isAdmin) {
-                localStorage.setItem('chessGameState', JSON.stringify(gameState));
-                console.log('Stato salvato (Admin):', gameState.gameId);
-            } else {
-                // Gli invitati aggiornano solo i dati di gioco
-                const currentSaved = localStorage.getItem('chessGameState');
-                if (currentSaved) {
-                    try {
-                        const currentState = JSON.parse(currentSaved);
-                        const updatedState = {
-                            ...currentState,
-                            board: gameState.board,
-                            currentPlayer: gameState.currentPlayer,
-                            gameActive: gameState.gameActive,
-                            moveHistory: gameState.moveHistory,
-                            gameEnded: gameState.gameEnded,
-                            castlingRights: gameState.castlingRights,
-                            enPassantTarget: gameState.enPassantTarget,
-                            halfMoveClock: gameState.halfMoveClock,
-                            fullMoveNumber: gameState.fullMoveNumber
-                        };
-                        localStorage.setItem('chessGameState', JSON.stringify(updatedState));
-                        console.log('Dati partita aggiornati (Invitato)');
-                    } catch (error) {
-                        console.error('Errore nell\'aggiornamento stato:', error);
-                    }
-                }
-            }
-        }
-
-        function loadGameState() {
-            const saved = localStorage.getItem('chessGameState');
-            if (saved) {
-                const loadedState = JSON.parse(saved);
-                // Merge con stato corrente per preservare alcune proprietà
-                gameState = { ...gameState, ...loadedState };
-                console.log('Stato caricato:', gameState.gameId, 'Admin:', gameState.isAdmin, 'Colore:', gameState.playerColor);
-                return true;
-            }
-            return false;
-        }
-
-        // Inizializzazione applicazione  
-        function initializeApp() {
-            // Controlla se c'è un link di partita nell'URL (nuovo formato compatto o vecchio)
-            const compactData = getUrlParameter('g');
-            const oldGameId = getUrlParameter('game');
-            const hasGameLink = compactData || oldGameId;
+        // Inizializzazione applicazione
+        async function initializeApp() {
+            // Controlla se c'è un game ID nell'URL
+            const gameId = getUrlParameter('game');
             
-            console.log('=== INIZIALIZZAZIONE APP ===');
-            console.log('User Agent:', navigator.userAgent);
-            console.log('URL completo:', window.location.href);
-            console.log('URL length:', window.location.href.length);
-            console.log('Formato compatto (g):', !!compactData);
-            console.log('Formato vecchio (game):', !!oldGameId);
+            console.log('=== INIZIALIZZAZIONE APP FIREBASE ===');
+            console.log('Game ID dall\'URL:', gameId);
             
-            if (hasGameLink) {
+            if (gameId) {
                 // Accesso tramite link partita
-                console.log('=== ACCESSO TRAMITE LINK ===');
-                
                 showScreen('loading-screen');
                 
-                setTimeout(() => {
-                    // Carica i dati della partita
-                    const gameLoaded = loadGameDataOnly();
+                setTimeout(async () => {
+                    const gameLoaded = await loadGameFromFirebase(gameId);
                     
                     if (gameLoaded && gameState.gameActive) {
+                        console.log('🔥 Partita caricata da Firebase');
                         
-                        // NUOVA LOGICA: Chi deve giocare ora?
-                        console.log('=== DETERMINAZIONE RUOLO ===');
-                        console.log('🔥 currentPlayer caricato dai dati:', gameState.currentPlayer);
-                        
-                        // LOGICA SEMPLICE: Se è il turno del bianco → chi apre è bianco
+                        // Determina il ruolo del giocatore in base al turno corrente
                         if (gameState.currentPlayer === 'white') {
                             gameState.playerColor = 'white';
                             gameState.isAdmin = true;
-                            console.log('🎯 È IL TURNO DEL BIANCO: Assegnato BIANCO/Admin');
+                            console.log('🎯 Assegnato BIANCO/Admin');
                         } else {
                             gameState.playerColor = 'black';  
                             gameState.isAdmin = false;
-                            console.log('🎯 È IL TURNO DEL NERO: Assegnato NERO/Invitato');
+                            console.log('🎯 Assegnato NERO/Invitato');
                         }
                         
-                        console.log('=== STATO FINALE PRIMA DI SHOWGAME ===');
-                        console.log('currentPlayer:', gameState.currentPlayer);
-                        console.log('playerColor:', gameState.playerColor);
-                        console.log('isAdmin:', gameState.isAdmin);
+                        // Setup real-time listener
+                        setupGameListener(gameId);
                         
                         showGame();
                         
                     } else {
-                        // Partita non trovata o non valida - mostra errore dettagliato
-                        console.log('=== ERRORE CARICAMENTO ===');
-                        console.log('gameLoaded:', gameLoaded);
-                        console.log('gameActive:', gameState.gameActive);
-                        
+                        console.log('❌ Errore caricamento partita Firebase');
                         showScreen('error-screen');
-                        
-                        let errorMsg = 'Link partita non valido o corrotto.';
-                        if (!gameLoaded) {
-                            errorMsg += ' Impossibile decodificare i dati dal link.';
-                        } else if (!gameState.gameActive) {
-                            errorMsg += ' La partita non è più attiva.';
-                        }
-                        
-                        // Suggerimenti specifici
-                        errorMsg += '\n\n💡 Suggerimenti:\n';
-                        errorMsg += '• Controlla che il link sia completo\n';
-                        errorMsg += '• Prova a copiare nuovamente il link\n';
-                        errorMsg += '• Assicurati che la partita sia ancora attiva';
-                        
-                        document.getElementById('error-message').textContent = errorMsg;
+                        document.getElementById('error-message').textContent = 'Partita non trovata su Firebase o non più attiva.';
                     }
                 }, 1000);
             } else {
-                // Accesso diretto alla homepage
-                const gameLoaded = loadGameState();
+                // Accesso diretto - controlla se è admin salvato
+                const savedAdmin = localStorage.getItem('chessAdminAuth');
                 
-                if (gameLoaded && gameState.isAdmin) {
+                if (savedAdmin === 'true') {
+                    gameState.isAdmin = true;
                     showAdminPanel();
                 } else {
-                    gameState.isAdmin = false;
                     showScreen('admin-login');
                 }
             }
         }
 
-        // Carica solo i dati della partita senza stato admin
-        function loadGameDataOnly() {
-            console.log('=== CARICAMENTO DA URL COMPATTO ===');
-            
-            // Nuovo formato compatto
-            const compactData = getUrlParameter('g');
-            if (compactData) {
-                console.log('Trovati dati compatti, lunghezza:', compactData.length);
-                
-                try {
-                    // Decodifica da Base64
-                    const jsonString = atob(compactData);
-                    const data = JSON.parse(jsonString);
-                    
-                    console.log('✅ Dati compatti decodificati:', data);
-                    
-                    // Ricostruisci lo stato completo dai dati compatti
-                    gameState = {
-                        board: compactStringToBoard(data.b),
-                        currentPlayer: data.c === 'w' ? 'white' : 'black',
-                        gameActive: data.a,
-                        selectedSquare: null,
-                        moveHistory: [], // Ricostruiamo una storia vuota  
-                        players: data.p || { white: 'Bianco', black: 'Nero' },
-                        gameId: data.id,
-                        isAdmin: false,
-                        playerColor: null,
-                        baseUrl: null,
-                        gameEnded: data.e || false,
-                        castlingRights: {
-                            white: { kingside: true, queenside: true },
-                            black: { kingside: true, queenside: true }
-                        },
-                        enPassantTarget: null,
-                        halfMoveClock: 0,
-                        fullMoveNumber: Math.floor(data.m / 2) + 1
-                    };
-                    
-                    console.log('✅ Stato ricostruito da dati compatti');
-                    console.log('currentPlayer:', gameState.currentPlayer);
-                    console.log('gameId:', gameState.gameId);
-                    console.log('gameActive:', gameState.gameActive);
-                    
-                    return true;
-                } catch (error) {
-                    console.error('❌ Errore decodifica dati compatti:', error);
-                }
-            }
+        // Avvia applicazione quando Firebase è pronto
+        window.addEventListener('load', () => {
+            // Aspetta un momento per essere sicuri che Firebase sia inizializzato
+            setTimeout(initializeApp, 500);
+        });
 
-            // Fallback: formato precedente con parametro 'data'
-            const urlGameData = getUrlParameter('data');
-            if (urlGameData) {
-                console.log('=== FALLBACK: CARICAMENTO FORMATO PRECEDENTE ===');
-                try {
-                    const decodedData = JSON.parse(decodeURIComponent(urlGameData));
-                    console.log('✅ Dati precedenti decodificati');
-                    
-                    gameState = {
-                        board: decodedData.board,
-                        currentPlayer: decodedData.currentPlayer,
-                        gameActive: decodedData.gameActive,
-                        selectedSquare: null,
-                        moveHistory: decodedData.moveHistory || [],
-                        players: decodedData.players || { white: 'Bianco', black: 'Nero' },
-                        gameId: decodedData.gameId,
-                        isAdmin: false,
-                        playerColor: null,
-                        baseUrl: null,
-                        gameEnded: decodedData.gameEnded || false,
-                        castlingRights: decodedData.castlingRights || {
-                            white: { kingside: true, queenside: true },
-                            black: { kingside: true, queenside: true }
-                        },
-                        enPassantTarget: decodedData.enPassantTarget || null,
-                        halfMoveClock: 0,
-                        fullMoveNumber: 1
-                    };
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Errore parsing dati precedenti:', error);
-                }
-            }
-
-            // Fallback: localStorage mobile (compatibilità)
-            const gameId = getUrlParameter('game');
-            if (gameId) {
-                const gameKey = 'game_data_' + gameId;
-                const savedGameData = localStorage.getItem(gameKey);
-                
-                if (savedGameData) {
-                    try {
-                        const gameData = JSON.parse(savedGameData);
-                        console.log('✅ Dati caricati da localStorage mobile');
-                        
-                        gameState = {
-                            board: gameData.board,
-                            currentPlayer: gameData.currentPlayer,
-                            gameActive: gameData.gameActive,
-                            selectedSquare: null,
-                            moveHistory: gameData.moveHistory || [],
-                            players: gameData.players || { white: 'Bianco', black: 'Nero' },
-                            gameId: gameData.gameId,
-                            isAdmin: false,
-                            playerColor: null,
-                            baseUrl: null,
-                            gameEnded: gameData.gameEnded || false,
-                            castlingRights: gameData.castlingRights || {
-                                white: { kingside: true, queenside: true },
-                                black: { kingside: true, queenside: true }
-                            },
-                            enPassantTarget: gameData.enPassantTarget || null,
-                            halfMoveClock: 0,
-                            fullMoveNumber: 1
-                        };
-                        
-                        return true;
-                    } catch (error) {
-                        console.error('Errore parsing localStorage mobile:', error);
-                    }
-                }
-            }
-
-            console.log('❌ NESSUN DATO TROVATO');
-            return false;
-        }
-
-        // Avvia applicazione
-        window.onload = initializeApp;
-
-        // Gestione ricarica pagina
+        // Gestione chiusura pagina
         window.addEventListener('beforeunload', function() {
-            if (gameState.gameActive) {
-                saveGameState();
+            if (currentGameListener) {
+                window.firebaseOff(currentGameListener);
             }
         });
     </script>
