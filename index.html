@@ -307,6 +307,24 @@
         <!-- Schermata Partita -->
         <div id="game-screen" class="screen">
             <h1>♔ Chess Host</h1>
+            <div class="status-message status-warning" style="margin-bottom: 15px;">
+                <small>
+                    <strong>📖 Come Giocare:</strong><br>
+                    1. Fai la tua mossa cliccando sui pezzi<br>
+                    2. Dopo la mossa, <strong>copia il link aggiornato</strong> che appare<br>
+                    3. <strong>Invia il link all'avversario</strong> via WhatsApp/Telegram/Email<br>
+                    4. L'avversario <strong>apre il nuovo link</strong> per vedere la tua mossa e giocare
+                </small>
+            </div>
+            
+            <!-- Link Corrente sempre visibile -->
+            <div class="game-info" id="current-link-display" style="background: #e7f3ff; border: 2px solid #007bff;">
+                <h4 style="margin: 0 0 10px 0; color: #007bff;">🔗 Link Partita Corrente</h4>
+                <input type="text" id="current-game-url" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#ffffff; border:1px solid #007bff; border-radius:4px;">
+                <button class="btn" onclick="copyCurrentLink()" style="background: #007bff;">📋 Copia Link Corrente</button>
+                <p style="margin: 5px 0 0 0; color: #555;"><em>💡 Condividi questo link per far giocare l'avversario</em></p>
+            </div>
+
             <div class="player-names">
                 <span class="white-player" id="white-name">Bianco</span>
                 <span class="black-player" id="black-name">Nero</span>
@@ -323,10 +341,6 @@
                 <button class="btn" onclick="endGame('draw')">Pareggio</button>
                 <button class="btn" onclick="endGame('abandoned')">Abbandono</button>
                 <button class="btn btn-danger" onclick="resetGame()">Reset Partita</button>
-                <div class="game-link">
-                    <strong>Link Partita:</strong><br>
-                    <span id="game-link-display"></span>
-                </div>
             </div>
             <div class="moves-history">
                 <h4>Cronologia Mosse:</h4>
@@ -613,7 +627,6 @@
             }
         }
 
-        // Gestione partita
         function showGame() {
             if (!gameState.gameActive) {
                 showScreen('error-screen');
@@ -626,6 +639,14 @@
                 gameState.playerColor = 'white';
             }
 
+            // DEBUG: Log dello stato per capire il problema
+            console.log('=== STATO PARTITA ===');
+            console.log('isAdmin:', gameState.isAdmin);
+            console.log('playerColor:', gameState.playerColor);
+            console.log('currentPlayer:', gameState.currentPlayer);
+            console.log('gameActive:', gameState.gameActive);
+            console.log('canPlayerMove:', canPlayerMove());
+
             showScreen('game-screen');
             document.getElementById('white-name').textContent = gameState.players.white;
             document.getElementById('black-name').textContent = gameState.players.black;
@@ -633,15 +654,27 @@
             // Mostra controlli admin se è amministratore
             if (gameState.isAdmin) {
                 document.getElementById('admin-controls').style.display = 'block';
-                document.getElementById('game-link-display').textContent = getGameUrl(gameState.gameId);
             } else {
                 // Nascondi controlli admin per i giocatori normali
                 document.getElementById('admin-controls').style.display = 'none';
             }
 
+            // Aggiorna il link corrente sempre visibile
+            updateCurrentGameLink();
+
             renderBoard();
             updateGameInfo();
             updateMovesHistory();
+        }
+
+        function updateAdminGameLink() {
+            if (gameState.isAdmin && gameState.gameActive) {
+                const currentUrl = getGameUrl(gameState.gameId);
+                const linkField = document.getElementById('admin-game-link');
+                if (linkField) {
+                    linkField.value = currentUrl;
+                }
+            }
         }
 
         function renderBoard() {
@@ -679,7 +712,15 @@
 
             // Controlla se il giocatore può fare mosse
             if (!canPlayerMove()) {
-                showMessage('game-status', 'Non è il tuo turno!', 'warning');
+                const debugInfo = `
+                    DEBUG INFO:
+                    - Il tuo colore: ${gameState.playerColor}
+                    - Turno corrente: ${gameState.currentPlayer}
+                    - Sei admin: ${gameState.isAdmin}
+                    - Partita attiva: ${gameState.gameActive}
+                `;
+                console.log(debugInfo);
+                showMessage('game-status', `Non è il tuo turno! ${debugInfo}`, 'error');
                 return;
             }
 
@@ -725,6 +766,12 @@
 
         function canPlayerMove() {
             // Ogni giocatore (anche l'admin) può muovere solo nel proprio turno
+            console.log('canPlayerMove check:', {
+                playerColor: gameState.playerColor,
+                currentPlayer: gameState.currentPlayer,
+                result: gameState.playerColor === gameState.currentPlayer
+            });
+            
             if (!gameState.playerColor) return false; // Nessun colore assegnato
             return gameState.playerColor === gameState.currentPlayer;
         }
@@ -889,6 +936,11 @@
             const targetPiece = gameState.board[to];
             const [color, pieceType] = piece;
 
+            console.log('=== MAKING MOVE ===');
+            console.log('From:', from, 'To:', to);
+            console.log('Piece:', piece);
+            console.log('Current player BEFORE move:', gameState.currentPlayer);
+
             // Salva mossa nella cronologia
             const moveNotation = getMoveNotation(from, to, piece, targetPiece);
             gameState.moveHistory.push(moveNotation);
@@ -905,6 +957,7 @@
 
             // Cambia turno
             gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+            console.log('Current player AFTER move:', gameState.currentPlayer);
 
             // Salva stato e aggiorna interfaccia
             saveGameState();
@@ -912,8 +965,66 @@
             updateGameInfo();
             updateMovesHistory();
 
+            // Aggiorna sempre il link corrente visibile
+            updateCurrentGameLink();
+
+            // Mostra messaggio con link aggiornato dopo ogni mossa
+            showUpdatedGameLink();
+
             // Controlla fine partita
             checkGameEnd();
+        }
+
+        function showUpdatedGameLink() {
+            // Dopo ogni mossa, mostra il link aggiornato
+            if (gameState.gameActive) {
+                const updatedUrl = getGameUrl(gameState.gameId);
+                const currentPlayerName = gameState.players[gameState.currentPlayer];
+                
+                const linkMessage = `
+                    <div class="status-message status-success" style="position: relative;">
+                        <button onclick="this.parentElement.style.display='none'" style="position: absolute; top: 5px; right: 10px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
+                        <h4>🔄 Mossa Effettuata!</h4>
+                        <p><strong>Tocca a: ${currentPlayerName}</strong></p>
+                        <p>Condividi questo link aggiornato per far vedere la tua mossa:</p>
+                        <input type="text" value="${updatedUrl}" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#d4edda; border:1px solid #c3e6cb; border-radius:4px;">
+                        <button class="btn" onclick="copyToClipboard('${updatedUrl.replace(/'/g, "\\'")}')">📋 Copia Link</button>
+                        <p><em>💡 L'avversario deve aprire questo nuovo link per vedere la tua mossa!</em></p>
+                    </div>
+                `;
+                
+                document.getElementById('game-status').innerHTML = linkMessage;
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('📋 Link copiato negli appunti!');
+            }).catch(() => {
+                // Fallback per browser più vecchi
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('📋 Link copiato negli appunti!');
+            });
+        }
+
+        function copyCurrentLink() {
+            const linkField = document.getElementById('current-game-url');
+            if (linkField && linkField.value) {
+                copyToClipboard(linkField.value);
+            }
+        }
+
+        function updateCurrentGameLink() {
+            const linkField = document.getElementById('current-game-url');
+            if (linkField && gameState.gameActive) {
+                const currentUrl = getGameUrl(gameState.gameId);
+                linkField.value = currentUrl;
+            }
         }
 
         function handleSpecialMoves(from, to, piece) {
@@ -1180,7 +1291,11 @@
             if (urlGameData) {
                 try {
                     const decodedData = JSON.parse(decodeURIComponent(urlGameData));
-                    console.log('Dati partita caricati da URL:', decodedData);
+                    console.log('=== DATI CARICATI DA URL ===');
+                    console.log('gameId:', decodedData.gameId);
+                    console.log('currentPlayer nel link:', decodedData.currentPlayer);
+                    console.log('gameActive nel link:', decodedData.gameActive);
+                    console.log('Dati completi:', decodedData);
                     
                     gameState = {
                         board: decodedData.board,
@@ -1203,6 +1318,7 @@
                         fullMoveNumber: 1
                     };
                     
+                    console.log('Stato caricato - currentPlayer:', gameState.currentPlayer);
                     return true;
                 } catch (error) {
                     console.error('Errore nel parsing dei dati URL:', error);
