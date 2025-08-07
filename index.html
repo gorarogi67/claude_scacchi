@@ -146,6 +146,7 @@
             background: radial-gradient(circle, #ff4444, #cc0000) !important;
             box-shadow: inset 0 0 0 3px #ff0000, 0 0 15px rgba(255, 68, 68, 0.8);
             animation: flame 1.5s ease-in-out infinite alternate;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text y="20" font-size="20" fill="gold">⚔️</text></svg>') 16 16, pointer;
         }
 
         @keyframes flame {
@@ -286,6 +287,71 @@
             display: block;
             margin-top: 5px;
         }
+
+        /* Modal Promozione Pedone */
+        .promotion-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .promotion-modal.active {
+            display: flex;
+        }
+
+        .promotion-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: modalAppear 0.3s ease-out;
+        }
+
+        @keyframes modalAppear {
+            from { 
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to { 
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .promotion-pieces {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .promotion-piece {
+            width: 80px;
+            height: 80px;
+            font-size: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .promotion-piece:hover {
+            background: #e0e0ff;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -383,6 +449,30 @@
             </div>
             <button class="btn" onclick="location.reload()">Ricarica Pagina</button>
         </div>
+
+        <!-- Modal Promozione Pedone -->
+        <div id="promotion-modal" class="promotion-modal">
+            <div class="promotion-content">
+                <h3>🎉 Promozione Pedone!</h3>
+                <p>Scegli in quale pezzo trasformare il tuo pedone:</p>
+                <div class="promotion-pieces">
+                    <div class="promotion-piece" onclick="promoteTopiece('queen')" title="Regina">
+                        <span id="promotion-queen">♕</span>
+                    </div>
+                    <div class="promotion-piece" onclick="promoteTopiece('rook')" title="Torre">
+                        <span id="promotion-rook">♖</span>
+                    </div>
+                    <div class="promotion-piece" onclick="promoteTopiece('bishop')" title="Alfiere">
+                        <span id="promotion-bishop">♗</span>
+                    </div>
+                    <div class="promotion-piece" onclick="promoteTopiece('knight')" title="Cavallo">
+                        <span id="promotion-knight">♘</span>
+                    </div>
+                </div>
+                <p><small>💡 La Regina è il pezzo più potente, ma ogni pezzo ha i suoi vantaggi!</small></p>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -1002,9 +1092,6 @@
             const moveNotation = getMoveNotation(from, to, piece, targetPiece);
             gameState.moveHistory.push(moveNotation);
 
-            // Gestisci mosse speciali
-            handleSpecialMoves(from, to, piece);
-
             // Esegui la mossa
             gameState.board[to] = piece;
             gameState.board[from] = null;
@@ -1012,24 +1099,18 @@
             // Aggiorna diritti di arrocco
             updateCastlingRights(from, to, piece);
 
-            // Cambia turno
-            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
-            console.log('Current player AFTER move:', gameState.currentPlayer);
+            // Gestisci mosse speciali (inclusa promozione)
+            const hasPromotion = handleSpecialMoves(from, to, piece);
 
-            // Salva stato e aggiorna interfaccia
-            saveGameState();
-            renderBoard();
-            updateGameInfo();
-            updateMovesHistory();
+            if (hasPromotion) {
+                // Se c'è una promozione, la mossa sarà completata dopo la scelta del pezzo
+                // Il modal è già mostrato, aspettiamo la scelta dell'utente
+                console.log('Promozione in corso - aspettando scelta utente');
+                return;
+            }
 
-            // Aggiorna sempre il link corrente visibile
-            updateCurrentGameLink();
-
-            // Mostra messaggio con link aggiornato dopo ogni mossa
-            showUpdatedGameLink();
-
-            // Controlla fine partita
-            checkGameEnd();
+            // Se non c'è promozione, completa normalmente la mossa
+            completeMove();
         }
 
         function showUpdatedGameLink() {
@@ -1106,6 +1187,9 @@
             }
         }
 
+        // Variabile per gestire la promozione
+        let promotionData = null;
+
         function handleSpecialMoves(from, to, piece) {
             const [color, pieceType] = piece;
             const fromRow = Math.floor(from / 8);
@@ -1137,11 +1221,68 @@
                 gameState.enPassantTarget = null;
             }
 
-            // Promozione pedone
+            // Promozione pedone - ora con scelta!
             if (pieceType === 'pawn' && (toRow === 0 || toRow === 7)) {
-                // Per semplicità, promovi sempre a regina
-                gameState.board[to] = [color, 'queen'];
+                // Salva i dati per la promozione
+                promotionData = {
+                    position: to,
+                    color: color
+                };
+                
+                // Mostra il modal di scelta
+                showPromotionModal(color);
+                return true; // Indica che c'è una promozione in corso
             }
+
+            return false;
+        }
+
+        function showPromotionModal(color) {
+            const modal = document.getElementById('promotion-modal');
+            
+            // Aggiorna i pezzi nel modal con il colore corretto
+            document.getElementById('promotion-queen').textContent = chessPieces[color]['queen'];
+            document.getElementById('promotion-rook').textContent = chessPieces[color]['rook'];
+            document.getElementById('promotion-bishop').textContent = chessPieces[color]['bishop'];
+            document.getElementById('promotion-knight').textContent = chessPieces[color]['knight'];
+            
+            modal.classList.add('active');
+        }
+
+        function promoteTopiece(pieceType) {
+            if (!promotionData) return;
+            
+            // Applica la promozione scelta
+            gameState.board[promotionData.position] = [promotionData.color, pieceType];
+            
+            // Chiudi il modal
+            document.getElementById('promotion-modal').classList.remove('active');
+            
+            // Pulisci i dati di promozione
+            promotionData = null;
+            
+            // Continua con il resto della mossa (cambio turno, salvataggio, etc.)
+            completeMove();
+        }
+
+        function completeMove() {
+            // Cambia turno
+            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+
+            // Salva stato e aggiorna interfaccia
+            saveGameState();
+            renderBoard();
+            updateGameInfo();
+            updateMovesHistory();
+
+            // Aggiorna sempre il link corrente visibile
+            updateCurrentGameLink();
+
+            // Mostra messaggio con link aggiornato dopo ogni mossa
+            showUpdatedGameLink();
+
+            // Controlla fine partita
+            checkGameEnd();
         }
 
         function updateCastlingRights(from, to, piece) {
