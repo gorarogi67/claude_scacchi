@@ -142,6 +142,27 @@
             box-shadow: inset 0 0 0 3px #7fb800;
         }
 
+        .square.possible-capture {
+            background: radial-gradient(circle, #ff4444, #cc0000) !important;
+            box-shadow: inset 0 0 0 3px #ff0000, 0 0 15px rgba(255, 68, 68, 0.8);
+            animation: flame 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes flame {
+            0% { 
+                box-shadow: inset 0 0 0 3px #ff0000, 0 0 15px rgba(255, 68, 68, 0.8);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: inset 0 0 0 3px #ff6600, 0 0 20px rgba(255, 102, 0, 0.9);
+                transform: scale(1.05);
+            }
+            100% { 
+                box-shadow: inset 0 0 0 3px #ff0000, 0 0 25px rgba(255, 0, 0, 1);
+                transform: scale(1.02);
+            }
+        }
+
         .square.not-playable {
             opacity: 0.6;
             cursor: not-allowed;
@@ -732,9 +753,9 @@
                 return;
             }
 
-            // Rimuovi evidenziazioni precedenti
+            // Rimuovi evidenziazioni precedenti (sia mosse che catture)
             document.querySelectorAll('.square').forEach(sq => {
-                sq.classList.remove('selected', 'possible-move');
+                sq.classList.remove('selected', 'possible-move', 'possible-capture');
             });
 
             const piece = gameState.board[index];
@@ -786,9 +807,37 @@
 
         function highlightPossibleMoves(fromIndex) {
             const possibleMoves = getAllValidMovesForPiece(fromIndex);
+            const piece = gameState.board[fromIndex];
+            
             possibleMoves.forEach(toIndex => {
-                document.querySelector(`[data-index="${toIndex}"]`).classList.add('possible-move');
+                const targetPiece = gameState.board[toIndex];
+                const squareElement = document.querySelector(`[data-index="${toIndex}"]`);
+                
+                // Controlla se è una mossa di cattura
+                const isCapture = isCapturingMove(fromIndex, toIndex, piece, targetPiece);
+                
+                if (isCapture) {
+                    // Cattura: effetto fiamma rosso 🔥
+                    squareElement.classList.add('possible-capture');
+                } else {
+                    // Mossa normale: bordo verde
+                    squareElement.classList.add('possible-move');
+                }
             });
+        }
+
+        function isCapturingMove(fromIndex, toIndex, piece, targetPiece) {
+            // Cattura diretta: c'è un pezzo avversario sulla casella di destinazione
+            if (targetPiece && targetPiece[0] !== piece[0]) {
+                return true;
+            }
+            
+            // En passant: pedone che cattura diagonalmente su casella vuota
+            if (piece[1] === 'pawn' && gameState.enPassantTarget === toIndex) {
+                return true;
+            }
+            
+            return false;
         }
 
         function getAllValidMovesForPiece(index) {
