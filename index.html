@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Host</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            max-width: 800px;
+            width: 95%;
+            margin: 20px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="password"], input[type="email"], input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            gap: 0;
+            margin: 20px auto;
+            border: 3px solid #333;
+            border-radius: 5px;
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .square.white {
+            background-color: #f0d9b5;
+        }
+
+        .square.black {
+            background-color: #b58863;
+        }
+
+        .square.selected {
+            background-color: #7fb800 !important;
+        }
+
+        .square.highlight {
+            background-color: #ffff99 !important;
+        }
+
+        .square.possible-move {
+            box-shadow: inset 0 0 0 3px #7fb800;
+        }
+
+        .square.not-playable {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .square.not-playable:hover {
+            transform: none;
+        }
+
+        .game-info {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .current-player {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .game-link {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+
+        .moves-history {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .player-names {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .white-player {
+            color: #333;
+        }
+
+        .black-player {
+            color: #666;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        @media (max-width: 600px) {
+            .chess-board {
+                grid-template-columns: repeat(8, 45px);
+                grid-template-rows: repeat(8, 45px);
+            }
+
+            .square {
+                width: 45px;
+                height: 45px;
+                font-size: 30px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        small {
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Schermata Login Amministratore -->
+        <div id="admin-login" class="screen active">
+            <h1>🏰 Chess Host</h1>
+            <h2>Accesso Amministratore</h2>
+            <div class="form-group">
+                <label for="admin-password">Password Amministratore:</label>
+                <input type="password" id="admin-password" placeholder="Inserisci la password">
+            </div>
+            <button class="btn" onclick="adminLogin()">Accedi</button>
+            <div id="login-message"></div>
+        </div>
+
+        <!-- Pannello Controllo Amministratore -->
+        <div id="admin-panel" class="screen">
+            <h1>🎮 Pannello Amministratore</h1>
+            <div class="form-group">
+                <label for="base-url">URL della tua applicazione pubblicata:</label>
+                <input type="url" id="base-url" placeholder="https://tuosito.com/chess-host.html" value="">
+                <small style="color: #666; font-size: 12px;">💡 Inserisci l'URL completo dove hai pubblicato questa pagina</small>
+            </div>
+            <div class="form-group">
+                <label for="white-player">Nome Giocatore Bianco:</label>
+                <input type="text" id="white-player" value="Bianco" placeholder="Nome giocatore bianco">
+            </div>
+            <div class="form-group">
+                <label for="black-player">Nome Giocatore Nero:</label>
+                <input type="text" id="black-player" value="Nero" placeholder="Nome giocatore nero">
+            </div>
+            <button class="btn" onclick="createGame()">Crea Partita</button>
+            <button class="btn btn-secondary" onclick="showGameIfExists()">Visualizza Partita Attiva</button>
+            <button class="btn btn-danger" onclick="resetGame()">Reset Partita</button>
+            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            <div id="admin-message"></div>
+        </div>
+
+        <!-- Schermata Partita -->
+        <div id="game-screen" class="screen">
+            <h1>♔ Chess Host</h1>
+            <div class="player-names">
+                <span class="white-player" id="white-name">Bianco</span>
+                <span class="black-player" id="black-name">Nero</span>
+            </div>
+            <div class="game-info">
+                <div class="current-player" id="current-turn">Turno del Bianco</div>
+                <div id="game-status"></div>
+            </div>
+            <div class="chess-board" id="chess-board"></div>
+            <div class="game-info" id="admin-controls" style="display:none;">
+                <h3>Controlli Amministratore</h3>
+                <button class="btn" onclick="endGame('white')">Vittoria Bianco</button>
+                <button class="btn" onclick="endGame('black')">Vittoria Nero</button>
+                <button class="btn" onclick="endGame('draw')">Pareggio</button>
+                <button class="btn" onclick="endGame('abandoned')">Abbandono</button>
+                <button class="btn btn-danger" onclick="resetGame()">Reset Partita</button>
+                <div class="game-link">
+                    <strong>Link Partita:</strong><br>
+                    <span id="game-link-display"></span>
+                </div>
+            </div>
+            <div class="moves-history">
+                <h4>Cronologia Mosse:</h4>
+                <div id="moves-list"></div>
+            </div>
+        </div>
+
+        <!-- Schermata Caricamento -->
+        <div id="loading-screen" class="screen">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Caricamento partita in corso...</p>
+            </div>
+        </div>
+
+        <!-- Schermata Errore -->
+        <div id="error-screen" class="screen">
+            <h1>⚠️ Errore</h1>
+            <div class="status-message status-error" id="error-message">
+                Link partita non valido o partita non trovata.
+            </div>
+            <button class="btn" onclick="location.reload()">Ricarica Pagina</button>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione
+        const ADMIN_PASSWORD = 'chess123'; // Password amministratore - CAMBIA QUESTA!
+        
+        // State dell'applicazione
+        let gameState = {
+            board: null,
+            currentPlayer: 'white',
+            gameActive: false,
+            selectedSquare: null,
+            moveHistory: [],
+            players: { white: 'Bianco', black: 'Nero' },
+            gameId: null,
+            isAdmin: false,
+            playerColor: null, // 'white', 'black', o null per admin
+            baseUrl: null, // URL base dell'applicazione pubblicata
+            gameEnded: false,
+            castlingRights: {
+                white: { kingside: true, queenside: true },
+                black: { kingside: true, queenside: true }
+            },
+            enPassantTarget: null,
+            halfMoveClock: 0,
+            fullMoveNumber: 1
+        };
+
+        // Pezzi degli scacchi Unicode
+        const chessPieces = {
+            'white': {
+                'king': '♔', 'queen': '♕', 'rook': '♖',
+                'bishop': '♗', 'knight': '♘', 'pawn': '♙'
+            },
+            'black': {
+                'king': '♚', 'queen': '♛', 'rook': '♜',
+                'bishop': '♝', 'knight': '♞', 'pawn': '♟'
+            }
+        };
+
+        // Inizializzazione scacchiera
+        function initializeBoard() {
+            return [
+                ['black', 'rook'], ['black', 'knight'], ['black', 'bishop'], ['black', 'queen'],
+                ['black', 'king'], ['black', 'bishop'], ['black', 'knight'], ['black', 'rook'],
+                ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'],
+                ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'],
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'],
+                ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'],
+                ['white', 'rook'], ['white', 'knight'], ['white', 'bishop'], ['white', 'queen'],
+                ['white', 'king'], ['white', 'bishop'], ['white', 'knight'], ['white', 'rook']
+            ];
+        }
+
+        // Funzioni di utilità
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showMessage(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            
+            // Pulisci i messaggi temporanei dopo 3 secondi (tranne quelli permanenti)
+            if (elementId === 'game-status' && (message.includes('Non è il tuo turno') || message.includes('Puoi muovere solo'))) {
+                setTimeout(() => {
+                    if (element.innerHTML.includes(message)) {
+                        element.innerHTML = '';
+                    }
+                }, 3000);
+            }
+        }
+
+        function generateGameId() {
+            return 'game_' + Math.random().toString(36).substr(2, 16) + Date.now().toString(36);
+        }
+
+        function getGameUrl(gameId) {
+            // Prima prova a usare l'URL del form di input
+            const customUrl = document.getElementById('base-url')?.value;
+            if (customUrl && customUrl.trim()) {
+                const baseUrl = customUrl.trim().replace(/\/$/, ''); // Rimuovi slash finale se presente
+                return baseUrl + '?game=' + gameId;
+            }
+            
+            // Poi prova a usare l'URL salvato nello stato
+            if (gameState.baseUrl) {
+                const baseUrl = gameState.baseUrl.replace(/\/$/, '');
+                return baseUrl + '?game=' + gameId;
+            }
+            
+            // Fallback all'URL corrente 
+            return window.location.origin + window.location.pathname + '?game=' + gameId;
+        }
+
+        // Gestione URL e parametri
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Login amministratore
+        function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                gameState.isAdmin = true;
+                gameState.playerColor = null; // Reset del colore per admin
+                saveGameState(); // Salva lo stato admin
+                showAdminPanel();
+                showMessage('login-message', 'Accesso effettuato con successo!', 'success');
+            } else {
+                showMessage('login-message', 'Password non corretta!', 'error');
+            }
+        }
+
+        function logout() {
+            gameState.isAdmin = false;
+            gameState.playerColor = null;
+            saveGameState();
+            showScreen('admin-login');
+            document.getElementById('admin-password').value = '';
+        }
+
+        // Pannello amministratore
+        function showAdminPanel() {
+            showScreen('admin-panel');
+            
+            // Ricarica l'URL base salvato se esiste
+            if (gameState.baseUrl) {
+                document.getElementById('base-url').value = gameState.baseUrl;
+            } else {
+                // Suggerisci l'URL corrente come default
+                const currentUrl = window.location.href.split('?')[0];
+                document.getElementById('base-url').placeholder = currentUrl;
+            }
+        }
+
+        function createGame() {
+            const baseUrl = document.getElementById('base-url').value.trim();
+            const whiteName = document.getElementById('white-player').value || 'Bianco';
+            const blackName = document.getElementById('black-player').value || 'Nero';
+
+            if (!baseUrl) {
+                showMessage('admin-message', '⚠️ Inserisci l\'URL dove hai pubblicato l\'applicazione!', 'error');
+                return;
+            }
+
+            // Crea nuova partita
+            gameState.gameId = generateGameId();
+            gameState.players.white = whiteName;
+            gameState.players.black = blackName;
+            gameState.board = initializeBoard();
+            gameState.currentPlayer = 'white';
+            gameState.gameActive = true;
+            gameState.gameEnded = false;
+            gameState.moveHistory = [];
+            gameState.selectedSquare = null;
+            gameState.playerColor = 'white'; // L'admin che crea la partita gioca con i bianchi
+            gameState.castlingRights = {
+                white: { kingside: true, queenside: true },
+                black: { kingside: true, queenside: true }
+            };
+            gameState.enPassantTarget = null;
+
+            // Salva stato partita e URL base
+            gameState.baseUrl = baseUrl;
+            saveGameState();
+
+            // Mostra il link da condividere
+            const gameUrl = getGameUrl(gameState.gameId);
+            showGameLink(gameUrl, whiteName, blackName);
+        }
+
+        function showGameLink(gameUrl, whiteName, blackName) {
+            const linkMessage = `
+                <div class="status-message status-success">
+                    <h4>🎉 Partita Creata!</h4>
+                    <p><strong>Giocatori:</strong></p>
+                    <p>• Bianco: ${whiteName} (Tu - Admin)</p>
+                    <p>• Nero: ${blackName} (Avversario)</p>
+                    <div class="game-link">
+                        <strong>Link per l'avversario:</strong><br>
+                        <input type="text" value="${gameUrl}" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#f8f9fa; border:1px solid #ddd; border-radius:4px;">
+                    </div>
+                    <p><em>💡 Copia il link sopra e invialo all'avversario.</em></p>
+                    <p><em>🧪 Per testare: apri il link in <strong>modalità incognito</strong> o in un <strong>browser diverso</strong></em></p>
+                    <button class="btn" onclick="showGame()" style="margin-top:10px;">Inizia a Giocare (come Bianco)</button>
+                </div>
+            `;
+            
+            showMessage('admin-message', linkMessage, 'success');
+        }
+
+        function showGameIfExists() {
+            if (gameState.gameActive) {
+                // L'admin ha accesso alla partita con il colore bianco
+                gameState.playerColor = 'white';
+                gameState.isAdmin = true;
+                showGame();
+            } else {
+                showMessage('admin-message', 'Nessuna partita attiva!', 'warning');
+            }
+        }
+
+        function resetGame() {
+            // Solo l'admin può resettare
+            if (!gameState.isAdmin) {
+                showMessage('game-status', 'Solo l\'amministratore può resettare la partita!', 'error');
+                return;
+            }
+
+            if (confirm('Sei sicuro di voler resettare la partita? Tutti i dati verranno cancellati.')) {
+                // Cancella stato partita
+                localStorage.removeItem('chessGameState');
+                
+                // Reset stato globale preservando admin status e URL base
+                const savedBaseUrl = gameState.baseUrl;
+                gameState = {
+                    board: null,
+                    currentPlayer: 'white',
+                    gameActive: false,
+                    selectedSquare: null,
+                    moveHistory: [],
+                    players: { white: 'Bianco', black: 'Nero' },
+                    gameId: null,
+                    isAdmin: true, // Mantiene admin
+                    playerColor: null,
+                    baseUrl: savedBaseUrl,
+                    gameEnded: false,
+                    castlingRights: {
+                        white: { kingside: true, queenside: true },
+                        black: { kingside: true, queenside: true }
+                    },
+                    enPassantTarget: null,
+                    halfMoveClock: 0,
+                    fullMoveNumber: 1
+                };
+
+                showAdminPanel();
+                showMessage('admin-message', 'Partita resettata con successo!', 'success');
+            }
+        }
+
+        // Gestione partita
+        function showGame() {
+            if (!gameState.gameActive) {
+                showScreen('error-screen');
+                document.getElementById('error-message').textContent = 'Nessuna partita attiva.';
+                return;
+            }
+
+            // Se è l'admin e non ha un colore assegnato, gli assegna il bianco
+            if (gameState.isAdmin && !gameState.playerColor) {
+                gameState.playerColor = 'white';
+            }
+
+            showScreen('game-screen');
+            document.getElementById('white-name').textContent = gameState.players.white;
+            document.getElementById('black-name').textContent = gameState.players.black;
+            
+            // Mostra controlli admin se è amministratore
+            if (gameState.isAdmin) {
+                document.getElementById('admin-controls').style.display = 'block';
+                document.getElementById('game-link-display').textContent = getGameUrl(gameState.gameId);
+            } else {
+                // Nascondi controlli admin per i giocatori normali
+                document.getElementById('admin-controls').style.display = 'none';
+            }
+
+            renderBoard();
+            updateGameInfo();
+            updateMovesHistory();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('chess-board');
+            board.innerHTML = '';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    const index = row * 8 + col;
+                    const isWhiteSquare = (row + col) % 2 === 0;
+                    
+                    square.className = `square ${isWhiteSquare ? 'white' : 'black'}`;
+                    square.dataset.index = index;
+                    square.onclick = () => handleSquareClick(index);
+
+                    // Aggiungi pezzo se presente
+                    if (gameState.board[index]) {
+                        const [color, piece] = gameState.board[index];
+                        square.textContent = chessPieces[color][piece];
+                        
+                        // Aggiungi classe per pezzi non giocabili
+                        if (gameState.playerColor && color !== gameState.playerColor) {
+                            square.classList.add('not-playable');
+                        }
+                    }
+
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        function handleSquareClick(index) {
+            if (!gameState.gameActive || gameState.gameEnded) return;
+
+            // Controlla se il giocatore può fare mosse
+            if (!canPlayerMove()) {
+                showMessage('game-status', 'Non è il tuo turno!', 'warning');
+                return;
+            }
+
+            // Rimuovi evidenziazioni precedenti
+            document.querySelectorAll('.square').forEach(sq => {
+                sq.classList.remove('selected', 'possible-move');
+            });
+
+            const piece = gameState.board[index];
+            
+            if (gameState.selectedSquare === null) {
+                // Selezione pezzo - può selezionare solo i propri pezzi
+                if (piece && piece[0] === gameState.currentPlayer && piece[0] === gameState.playerColor) {
+                    gameState.selectedSquare = index;
+                    document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+                    highlightPossibleMoves(index);
+                } else if (piece && piece[0] !== gameState.playerColor) {
+                    showMessage('game-status', 'Puoi muovere solo i tuoi pezzi!', 'warning');
+                }
+            } else {
+                // Tentativo di mossa
+                if (gameState.selectedSquare === index) {
+                    // Deseleziona
+                    gameState.selectedSquare = null;
+                } else if (isValidMove(gameState.selectedSquare, index)) {
+                    makeMove(gameState.selectedSquare, index);
+                    gameState.selectedSquare = null;
+                } else {
+                    // Seleziona nuovo pezzo se del colore giusto
+                    if (piece && piece[0] === gameState.currentPlayer && piece[0] === gameState.playerColor) {
+                        gameState.selectedSquare = index;
+                        document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+                        highlightPossibleMoves(index);
+                    } else {
+                        gameState.selectedSquare = null;
+                        if (piece && piece[0] !== gameState.playerColor) {
+                            showMessage('game-status', 'Puoi muovere solo i tuoi pezzi!', 'warning');
+                        }
+                    }
+                }
+            }
+        }
+
+        function canPlayerMove() {
+            // Ogni giocatore (anche l'admin) può muovere solo nel proprio turno
+            if (!gameState.playerColor) return false; // Nessun colore assegnato
+            return gameState.playerColor === gameState.currentPlayer;
+        }
+
+        function highlightPossibleMoves(fromIndex) {
+            const possibleMoves = getAllValidMovesForPiece(fromIndex);
+            possibleMoves.forEach(toIndex => {
+                document.querySelector(`[data-index="${toIndex}"]`).classList.add('possible-move');
+            });
+        }
+
+        function getAllValidMovesForPiece(index) {
+            const moves = [];
+            for (let i = 0; i < 64; i++) {
+                if (isValidMove(index, i)) {
+                    moves.push(i);
+                }
+            }
+            return moves;
+        }
+
+        function isValidMove(from, to) {
+            if (from === to) return false;
+            
+            const piece = gameState.board[from];
+            if (!piece || piece[0] !== gameState.currentPlayer) return false;
+
+            const targetPiece = gameState.board[to];
+            if (targetPiece && targetPiece[0] === gameState.currentPlayer) return false;
+
+            const [color, pieceType] = piece;
+            const fromRow = Math.floor(from / 8);
+            const fromCol = from % 8;
+            const toRow = Math.floor(to / 8);
+            const toCol = to % 8;
+            const rowDiff = toRow - fromRow;
+            const colDiff = toCol - fromCol;
+
+            // Logica specifica per ogni tipo di pezzo
+            switch (pieceType) {
+                case 'pawn':
+                    return isValidPawnMove(from, to, color, rowDiff, colDiff, targetPiece);
+                case 'rook':
+                    return isValidRookMove(from, to, rowDiff, colDiff);
+                case 'bishop':
+                    return isValidBishopMove(from, to, rowDiff, colDiff);
+                case 'queen':
+                    return isValidQueenMove(from, to, rowDiff, colDiff);
+                case 'knight':
+                    return isValidKnightMove(rowDiff, colDiff);
+                case 'king':
+                    return isValidKingMove(from, to, color, rowDiff, colDiff);
+                default:
+                    return false;
+            }
+        }
+
+        function isValidPawnMove(from, to, color, rowDiff, colDiff, targetPiece) {
+            const direction = color === 'white' ? -1 : 1;
+            const startRow = color === 'white' ? 6 : 1;
+            const fromRow = Math.floor(from / 8);
+
+            // Movimento in avanti
+            if (colDiff === 0 && !targetPiece) {
+                if (rowDiff === direction) return true;
+                if (fromRow === startRow && rowDiff === 2 * direction) return true;
+            }
+            
+            // Cattura diagonale
+            if (Math.abs(colDiff) === 1 && rowDiff === direction) {
+                if (targetPiece) return true;
+                // En passant
+                if (gameState.enPassantTarget === to) return true;
+            }
+
+            return false;
+        }
+
+        function isValidRookMove(from, to, rowDiff, colDiff) {
+            if (rowDiff !== 0 && colDiff !== 0) return false;
+            return isPathClear(from, to);
+        }
+
+        function isValidBishopMove(from, to, rowDiff, colDiff) {
+            if (Math.abs(rowDiff) !== Math.abs(colDiff)) return false;
+            return isPathClear(from, to);
+        }
+
+        function isValidQueenMove(from, to, rowDiff, colDiff) {
+            return isValidRookMove(from, to, rowDiff, colDiff) || 
+                   isValidBishopMove(from, to, rowDiff, colDiff);
+        }
+
+        function isValidKnightMove(rowDiff, colDiff) {
+            return (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) ||
+                   (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2);
+        }
+
+        function isValidKingMove(from, to, color, rowDiff, colDiff) {
+            // Movimento normale del re
+            if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) {
+                return true;
+            }
+            
+            // Arrocco
+            if (rowDiff === 0 && Math.abs(colDiff) === 2) {
+                return canCastle(color, colDiff > 0);
+            }
+
+            return false;
+        }
+
+        function canCastle(color, kingside) {
+            const row = color === 'white' ? 7 : 0;
+            const kingPos = row * 8 + 4;
+            const rookPos = kingside ? row * 8 + 7 : row * 8;
+
+            // Controlla diritti di arrocco
+            if (!gameState.castlingRights[color][kingside ? 'kingside' : 'queenside']) {
+                return false;
+            }
+
+            // Controlla che re e torre siano in posizione
+            if (!gameState.board[kingPos] || gameState.board[kingPos][1] !== 'king') return false;
+            if (!gameState.board[rookPos] || gameState.board[rookPos][1] !== 'rook') return false;
+
+            // Controlla che il percorso sia libero
+            const startCol = kingside ? 5 : 1;
+            const endCol = kingside ? 6 : 3;
+            for (let col = startCol; col <= endCol; col++) {
+                if (gameState.board[row * 8 + col]) return false;
+            }
+
+            return true;
+        }
+
+        function isPathClear(from, to) {
+            const fromRow = Math.floor(from / 8);
+            const fromCol = from % 8;
+            const toRow = Math.floor(to / 8);
+            const toCol = to % 8;
+
+            const rowStep = toRow > fromRow ? 1 : toRow < fromRow ? -1 : 0;
+            const colStep = toCol > fromCol ? 1 : toCol < fromCol ? -1 : 0;
+
+            let currentRow = fromRow + rowStep;
+            let currentCol = fromCol + colStep;
+
+            while (currentRow !== toRow || currentCol !== toCol) {
+                const index = currentRow * 8 + currentCol;
+                if (gameState.board[index]) return false;
+                
+                currentRow += rowStep;
+                currentCol += colStep;
+            }
+
+            return true;
+        }
+
+        function makeMove(from, to) {
+            const piece = gameState.board[from];
+            const targetPiece = gameState.board[to];
+            const [color, pieceType] = piece;
+
+            // Salva mossa nella cronologia
+            const moveNotation = getMoveNotation(from, to, piece, targetPiece);
+            gameState.moveHistory.push(moveNotation);
+
+            // Gestisci mosse speciali
+            handleSpecialMoves(from, to, piece);
+
+            // Esegui la mossa
+            gameState.board[to] = piece;
+            gameState.board[from] = null;
+
+            // Aggiorna diritti di arrocco
+            updateCastlingRights(from, to, piece);
+
+            // Cambia turno
+            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+
+            // Salva stato e aggiorna interfaccia
+            saveGameState();
+            renderBoard();
+            updateGameInfo();
+            updateMovesHistory();
+
+            // Controlla fine partita
+            checkGameEnd();
+        }
+
+        function handleSpecialMoves(from, to, piece) {
+            const [color, pieceType] = piece;
+            const fromRow = Math.floor(from / 8);
+            const toRow = Math.floor(to / 8);
+            const colDiff = (to % 8) - (from % 8);
+
+            // Arrocco
+            if (pieceType === 'king' && Math.abs(colDiff) === 2) {
+                const row = color === 'white' ? 7 : 0;
+                const rookFromCol = colDiff > 0 ? 7 : 0;
+                const rookToCol = colDiff > 0 ? 5 : 3;
+                
+                // Sposta la torre
+                gameState.board[row * 8 + rookToCol] = gameState.board[row * 8 + rookFromCol];
+                gameState.board[row * 8 + rookFromCol] = null;
+            }
+
+            // En passant
+            if (pieceType === 'pawn' && gameState.enPassantTarget === to) {
+                const capturedPawnRow = color === 'white' ? toRow + 1 : toRow - 1;
+                gameState.board[capturedPawnRow * 8 + (to % 8)] = null;
+            }
+
+            // Imposta target en passant per doppio movimento del pedone
+            if (pieceType === 'pawn' && Math.abs(toRow - fromRow) === 2) {
+                gameState.enPassantTarget = fromRow + (toRow - fromRow) / 2;
+                gameState.enPassantTarget = gameState.enPassantTarget * 8 + (to % 8);
+            } else {
+                gameState.enPassantTarget = null;
+            }
+
+            // Promozione pedone
+            if (pieceType === 'pawn' && (toRow === 0 || toRow === 7)) {
+                // Per semplicità, promovi sempre a regina
+                gameState.board[to] = [color, 'queen'];
+            }
+        }
+
+        function updateCastlingRights(from, to, piece) {
+            const [color, pieceType] = piece;
+
+            // Se il re si muove, perde tutti i diritti di arrocco
+            if (pieceType === 'king') {
+                gameState.castlingRights[color].kingside = false;
+                gameState.castlingRights[color].queenside = false;
+            }
+
+            // Se una torre si muove, perde il diritto di arrocco corrispondente
+            if (pieceType === 'rook') {
+                const row = color === 'white' ? 7 : 0;
+                if (from === row * 8 + 7) {
+                    gameState.castlingRights[color].kingside = false;
+                }
+                if (from === row * 8) {
+                    gameState.castlingRights[color].queenside = false;
+                }
+            }
+
+            // Se una torre viene catturata, aggiorna i diritti
+            const toRow = Math.floor(to / 8);
+            const toCol = to % 8;
+            if ((toRow === 0 || toRow === 7) && (toCol === 0 || toCol === 7)) {
+                const capturedColor = toRow === 0 ? 'black' : 'white';
+                if (toCol === 0) {
+                    gameState.castlingRights[capturedColor].queenside = false;
+                } else {
+                    gameState.castlingRights[capturedColor].kingside = false;
+                }
+            }
+        }
+
+        function getMoveNotation(from, to, piece, targetPiece) {
+            const fromCol = String.fromCharCode(97 + (from % 8));
+            const fromRow = 8 - Math.floor(from / 8);
+            const toCol = String.fromCharCode(97 + (to % 8));
+            const toRow = 8 - Math.floor(to / 8);
+            
+            let notation = '';
+            if (piece[1] !== 'pawn') {
+                notation += piece[1].charAt(0).toUpperCase();
+            }
+            
+            notation += fromCol + fromRow;
+            notation += targetPiece ? 'x' : '-';
+            notation += toCol + toRow;
+            
+            return notation;
+        }
+
+        function updateGameInfo() {
+            const currentPlayerName = gameState.players[gameState.currentPlayer];
+            let turnInfo = `Turno di ${currentPlayerName}`;
+            
+            // Aggiungi informazione specifica sul ruolo del giocatore
+            if (gameState.playerColor) {
+                const myColor = gameState.playerColor === 'white' ? 'Bianco' : 'Nero';
+                const roleInfo = gameState.isAdmin ? ' (Admin)' : ' (Invitato)';
+                
+                if (gameState.playerColor === gameState.currentPlayer) {
+                    turnInfo += ` - 🎯 È il tuo turno! (Tu: ${myColor}${roleInfo})`;
+                } else {
+                    turnInfo += ` - ⏳ Aspetta il tuo turno (Tu: ${myColor}${roleInfo})`;
+                }
+            }
+            
+            document.getElementById('current-turn').textContent = turnInfo;
+            
+            if (gameState.gameEnded) {
+                document.getElementById('game-status').innerHTML = '<div class="status-message status-warning">Partita terminata</div>';
+            } else if (!canPlayerMove() && gameState.playerColor) {
+                document.getElementById('game-status').innerHTML = '<div class="status-message status-warning">Non è il tuo turno, attendi che giochi l\'avversario</div>';
+            } else {
+                // Pulisci eventuali messaggi di avviso precedenti
+                const currentStatus = document.getElementById('game-status').innerHTML;
+                if (currentStatus.includes('Non è il tuo turno') || currentStatus.includes('Puoi muovere solo')) {
+                    document.getElementById('game-status').innerHTML = '';
+                }
+            }
+        }
+
+        function updateMovesHistory() {
+            const movesList = document.getElementById('moves-list');
+            if (gameState.moveHistory.length === 0) {
+                movesList.innerHTML = '<p>Nessuna mossa ancora effettuata.</p>';
+                return;
+            }
+
+            let html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+            for (let i = 0; i < gameState.moveHistory.length; i += 2) {
+                const moveNumber = Math.floor(i / 2) + 1;
+                const whiteMove = gameState.moveHistory[i] || '';
+                const blackMove = gameState.moveHistory[i + 1] || '';
+                html += `<div><strong>${moveNumber}.</strong> ${whiteMove} ${blackMove}</div>`;
+            }
+            html += '</div>';
+            movesList.innerHTML = html;
+        }
+
+        function checkGameEnd() {
+            // Implementazione semplificata - in una versione completa
+            // si controllerebbero scacco matto, stallo, etc.
+            // Per ora la partita termina solo quando l'admin la conclude
+        }
+
+        function endGame(result) {
+            if (!gameState.isAdmin) {
+                showMessage('game-status', 'Solo l\'amministratore può terminare la partita!', 'error');
+                return;
+            }
+
+            gameState.gameEnded = true;
+            let resultText = '';
+            
+            switch (result) {
+                case 'white':
+                    resultText = `Vittoria di ${gameState.players.white}!`;
+                    break;
+                case 'black':
+                    resultText = `Vittoria di ${gameState.players.black}!`;
+                    break;
+                case 'draw':
+                    resultText = 'Partita patta!';
+                    break;
+                case 'abandoned':
+                    resultText = 'Partita abbandonata.';
+                    break;
+            }
+
+            document.getElementById('game-status').innerHTML = 
+                `<div class="status-message status-success">${resultText}</div>`;
+            
+            saveGameState();
+        }
+
+        // Persistenza dati
+        function saveGameState() {
+            // Solo l'admin può salvare permanentemente lo stato
+            if (gameState.isAdmin) {
+                localStorage.setItem('chessGameState', JSON.stringify(gameState));
+                console.log('Stato salvato (Admin):', gameState.gameId, 'Admin:', gameState.isAdmin, 'Colore:', gameState.playerColor);
+            } else {
+                // Gli invitati salvano solo i dati della partita senza sovrascrivere l'admin
+                const currentSaved = localStorage.getItem('chessGameState');
+                if (currentSaved) {
+                    const currentState = JSON.parse(currentSaved);
+                    // Aggiorna solo i dati di gioco, mantiene isAdmin e playerColor dell'admin
+                    const updatedState = {
+                        ...currentState,
+                        board: gameState.board,
+                        currentPlayer: gameState.currentPlayer,
+                        gameActive: gameState.gameActive,
+                        moveHistory: gameState.moveHistory,
+                        gameEnded: gameState.gameEnded,
+                        castlingRights: gameState.castlingRights,
+                        enPassantTarget: gameState.enPassantTarget,
+                        halfMoveClock: gameState.halfMoveClock,
+                        fullMoveNumber: gameState.fullMoveNumber
+                    };
+                    localStorage.setItem('chessGameState', JSON.stringify(updatedState));
+                    console.log('Dati partita aggiornati (Invitato):', gameState.gameId);
+                }
+            }
+        }
+
+        function loadGameState() {
+            const saved = localStorage.getItem('chessGameState');
+            if (saved) {
+                const loadedState = JSON.parse(saved);
+                // Merge con stato corrente per preservare alcune proprietà
+                gameState = { ...gameState, ...loadedState };
+                console.log('Stato caricato:', gameState.gameId, 'Admin:', gameState.isAdmin, 'Colore:', gameState.playerColor);
+                return true;
+            }
+            return false;
+        }
+
+        // Inizializzazione applicazione
+        function initializeApp() {
+            // Controlla se c'è un link di partita nell'URL
+            const gameId = getUrlParameter('game');
+            
+            if (gameId) {
+                // Accesso tramite link partita - SEMPRE giocatore invitato
+                console.log('Accesso tramite link partita:', gameId);
+                showScreen('loading-screen');
+                
+                setTimeout(() => {
+                    // Carica solo i dati della partita, ignora stato admin
+                    const gameLoaded = loadGameDataOnly();
+                    
+                    if (gameLoaded && gameState.gameId === gameId && gameState.gameActive) {
+                        // FORZA il giocatore come invitato (nero) anche se è lo stesso browser
+                        gameState.playerColor = 'black';
+                        gameState.isAdmin = false;
+                        console.log('Giocatore invitato forzato - Colore:', gameState.playerColor);
+                        showGame();
+                    } else {
+                        // Partita non trovata o non valida
+                        showScreen('error-screen');
+                        document.getElementById('error-message').textContent = 'Link partita non valido o partita non trovata. Verifica che il link sia corretto e che la partita sia ancora attiva.';
+                    }
+                }, 1000);
+            } else {
+                // Accesso diretto alla homepage - carica stato esistente se disponibile
+                const gameLoaded = loadGameState();
+                
+                if (gameLoaded && gameState.isAdmin) {
+                    // Se era già loggato come admin, vai al pannello admin
+                    showAdminPanel();
+                } else {
+                    // Altrimenti mostra login admin
+                    gameState.isAdmin = false;
+                    showScreen('admin-login');
+                }
+            }
+        }
+
+        // Carica solo i dati della partita senza stato admin
+        function loadGameDataOnly() {
+            const saved = localStorage.getItem('chessGameState');
+            if (saved) {
+                const loadedState = JSON.parse(saved);
+                
+                // Carica SOLO i dati della partita, ignora isAdmin e playerColor
+                gameState = {
+                    board: loadedState.board,
+                    currentPlayer: loadedState.currentPlayer,
+                    gameActive: loadedState.gameActive,
+                    selectedSquare: null, // Reset selezione
+                    moveHistory: loadedState.moveHistory || [],
+                    players: loadedState.players || { white: 'Bianco', black: 'Nero' },
+                    gameId: loadedState.gameId,
+                    isAdmin: false, // FORZA false per i link
+                    playerColor: null, // Verrà impostato dopo
+                    baseUrl: loadedState.baseUrl,
+                    gameEnded: loadedState.gameEnded || false,
+                    castlingRights: loadedState.castlingRights || {
+                        white: { kingside: true, queenside: true },
+                        black: { kingside: true, queenside: true }
+                    },
+                    enPassantTarget: loadedState.enPassantTarget || null,
+                    halfMoveClock: loadedState.halfMoveClock || 0,
+                    fullMoveNumber: loadedState.fullMoveNumber || 1
+                };
+                
+                console.log('Dati partita caricati per giocatore invitato');
+                return true;
+            }
+            return false;
+        }
+
+        // Avvia applicazione
+        window.onload = initializeApp;
+
+        // Gestione ricarica pagina
+        window.addEventListener('beforeunload', function() {
+            if (gameState.gameActive) {
+                saveGameState();
+            }
+        });
+    </script>
+</body>
+</html>
