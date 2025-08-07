@@ -309,11 +309,8 @@
             <h1>♔ Chess Host</h1>
             <div class="status-message status-warning" style="margin-bottom: 15px;">
                 <small>
-                    <strong>📖 Come Giocare:</strong><br>
-                    1. Fai la tua mossa cliccando sui pezzi<br>
-                    2. Dopo la mossa, <strong>copia il link aggiornato</strong> che appare<br>
-                    3. <strong>Invia il link all'avversario</strong> via WhatsApp/Telegram/Email<br>
-                    4. L'avversario <strong>apre il nuovo link</strong> per vedere la tua mossa e giocare
+                    <strong>🧪 Versione Debug:</strong> Apri la Console (F12) per vedere i log di debug.
+                    <br><strong>📖 Come Giocare:</strong> Fai la tua mossa → Copia il link aggiornato → Invia all'avversario → L'avversario apre il nuovo link
                 </small>
             </div>
             
@@ -323,6 +320,7 @@
                 <input type="text" id="current-game-url" readonly onclick="this.select()" style="width:100%; padding:8px; margin:5px 0; font-family:monospace; background:#ffffff; border:1px solid #007bff; border-radius:4px;">
                 <button class="btn" onclick="copyCurrentLink()" style="background: #007bff;">📋 Copia Link Corrente</button>
                 <p style="margin: 5px 0 0 0; color: #555;"><em>💡 Condividi questo link per far giocare l'avversario</em></p>
+                <small style="color: #666;" id="url-length-info"></small>
             </div>
 
             <div class="player-names">
@@ -450,7 +448,7 @@
 
         function getGameUrl(gameId) {
             // Codifica lo stato della partita nell'URL per condivisione cross-device
-            const gameData = encodeURIComponent(JSON.stringify({
+            const gameData = {
                 gameId: gameState.gameId,
                 players: gameState.players,
                 board: gameState.board,
@@ -460,23 +458,33 @@
                 gameEnded: gameState.gameEnded,
                 castlingRights: gameState.castlingRights,
                 enPassantTarget: gameState.enPassantTarget
-            }));
+            };
+
+            console.log('=== GENERAZIONE LINK ===');
+            console.log('Dati da codificare:', gameData);
+            console.log('currentPlayer nei dati:', gameData.currentPlayer);
+            console.log('Numero mosse nei dati:', gameData.moveHistory.length);
+
+            const encodedData = encodeURIComponent(JSON.stringify(gameData));
+            console.log('Dati codificati (primi 200 caratteri):', encodedData.substring(0, 200));
 
             // Prima prova a usare l'URL del form di input
             const customUrl = document.getElementById('base-url')?.value;
             if (customUrl && customUrl.trim()) {
                 const baseUrl = customUrl.trim().replace(/\/$/, '');
-                return baseUrl + '?game=' + gameId + '&data=' + gameData;
+                const finalUrl = baseUrl + '?game=' + gameId + '&data=' + encodedData;
+                console.log('URL finale generato:', finalUrl.substring(0, 200) + '...');
+                return finalUrl;
             }
             
             // Poi prova a usare l'URL salvato nello stato
             if (gameState.baseUrl) {
                 const baseUrl = gameState.baseUrl.replace(/\/$/, '');
-                return baseUrl + '?game=' + gameId + '&data=' + gameData;
+                return baseUrl + '?game=' + gameId + '&data=' + encodedData;
             }
             
             // Fallback all'URL corrente 
-            return window.location.origin + window.location.pathname + '?game=' + gameId + '&data=' + gameData;
+            return window.location.origin + window.location.pathname + '?game=' + gameId + '&data=' + encodedData;
         }
 
         // Gestione URL e parametri
@@ -1021,9 +1029,26 @@
 
         function updateCurrentGameLink() {
             const linkField = document.getElementById('current-game-url');
+            const lengthInfo = document.getElementById('url-length-info');
+            
             if (linkField && gameState.gameActive) {
                 const currentUrl = getGameUrl(gameState.gameId);
                 linkField.value = currentUrl;
+                
+                // Mostra info debug sulla lunghezza URL
+                if (lengthInfo) {
+                    const urlLength = currentUrl.length;
+                    const dataParam = getUrlParameter('data') || '';
+                    lengthInfo.textContent = `Debug: URL ${urlLength} caratteri, Data ${dataParam.length} caratteri`;
+                    
+                    // Avvisa se l'URL è troppo lungo
+                    if (urlLength > 2000) {
+                        lengthInfo.style.color = 'red';
+                        lengthInfo.textContent += ' ⚠️ URL potrebbe essere troppo lungo!';
+                    } else {
+                        lengthInfo.style.color = '#666';
+                    }
+                }
             }
         }
 
@@ -1250,7 +1275,14 @@
             
             if (gameId) {
                 // Accesso tramite link partita - SEMPRE giocatore invitato
-                console.log('Accesso tramite link partita:', gameId);
+                console.log('=== ACCESSO TRAMITE LINK ===');
+                console.log('gameId dall\'URL:', gameId);
+                
+                // Controlla se ci sono dati nell'URL
+                const urlData = getUrlParameter('data');
+                console.log('Parametro data presente:', !!urlData);
+                console.log('Lunghezza data:', urlData ? urlData.length : 0);
+                
                 showScreen('loading-screen');
                 
                 setTimeout(() => {
@@ -1261,12 +1293,20 @@
                         // FORZA il giocatore come invitato (nero) anche se è lo stesso browser
                         gameState.playerColor = 'black';
                         gameState.isAdmin = false;
+                        console.log('=== INVITATO CARICATO ===');
                         console.log('Giocatore invitato forzato - Colore:', gameState.playerColor);
+                        console.log('Current player dalla partita:', gameState.currentPlayer);
+                        console.log('Numero di mosse:', gameState.moveHistory.length);
                         showGame();
                     } else {
                         // Partita non trovata o non valida
+                        console.log('=== ERRORE CARICAMENTO ===');
+                        console.log('gameLoaded:', gameLoaded);
+                        console.log('gameId match:', gameState.gameId === gameId);
+                        console.log('gameActive:', gameState.gameActive);
                         showScreen('error-screen');
-                        document.getElementById('error-message').textContent = 'Link partita non valido o partita non trovata. Verifica che il link sia corretto e che la partita sia ancora attiva.';
+                        document.getElementById('error-message').textContent = `Link partita non valido. 
+                        Debug: gameLoaded=${gameLoaded}, gameId=${gameState.gameId}, expected=${gameId}, active=${gameState.gameActive}`;
                     }
                 }, 1000);
             } else {
@@ -1288,14 +1328,23 @@
         function loadGameDataOnly() {
             // Prima prova a caricare dai parametri URL
             const urlGameData = getUrlParameter('data');
+            console.log('=== CARICAMENTO DA URL ===');
+            console.log('Parametro data trovato:', !!urlGameData);
+            
             if (urlGameData) {
+                console.log('Lunghezza data raw:', urlGameData.length);
+                console.log('Primi 200 caratteri data:', urlGameData.substring(0, 200));
+                
                 try {
+                    console.log('Tentativo di decodificare...');
                     const decodedData = JSON.parse(decodeURIComponent(urlGameData));
-                    console.log('=== DATI CARICATI DA URL ===');
+                    console.log('=== DATI DECODIFICATI CON SUCCESSO ===');
                     console.log('gameId:', decodedData.gameId);
-                    console.log('currentPlayer nel link:', decodedData.currentPlayer);
-                    console.log('gameActive nel link:', decodedData.gameActive);
-                    console.log('Dati completi:', decodedData);
+                    console.log('currentPlayer nei dati:', decodedData.currentPlayer);
+                    console.log('gameActive nei dati:', decodedData.gameActive);
+                    console.log('Numero di mosse nei dati:', decodedData.moveHistory ? decodedData.moveHistory.length : 0);
+                    console.log('Board definita:', !!decodedData.board);
+                    console.log('Primi 8 pezzi board:', decodedData.board ? decodedData.board.slice(0, 8) : 'N/A');
                     
                     gameState = {
                         board: decodedData.board,
@@ -1318,17 +1367,27 @@
                         fullMoveNumber: 1
                     };
                     
-                    console.log('Stato caricato - currentPlayer:', gameState.currentPlayer);
+                    console.log('=== STATO CARICATO ===');
+                    console.log('gameState.currentPlayer:', gameState.currentPlayer);
+                    console.log('gameState.gameActive:', gameState.gameActive);
+                    console.log('gameState.moveHistory.length:', gameState.moveHistory.length);
                     return true;
                 } catch (error) {
-                    console.error('Errore nel parsing dei dati URL:', error);
+                    console.error('=== ERRORE PARSING DATI URL ===');
+                    console.error('Errore:', error);
+                    console.error('Tipo di errore:', error.name);
+                    console.error('Messaggio:', error.message);
                 }
+            } else {
+                console.log('Parametro data non trovato nell\'URL');
             }
 
             // Fallback: prova localStorage (per compatibilità)
+            console.log('=== TENTATIVO FALLBACK LOCALSTORAGE ===');
             const saved = localStorage.getItem('chessGameState');
             if (saved) {
                 const loadedState = JSON.parse(saved);
+                console.log('Dati trovati in localStorage');
                 
                 // Carica SOLO i dati della partita, ignora isAdmin e playerColor
                 gameState = {
@@ -1356,6 +1415,7 @@
                 return true;
             }
             
+            console.log('=== NESSUN DATO TROVATO ===');
             return false;
         }
 
