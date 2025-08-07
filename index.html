@@ -558,7 +558,39 @@
         }
 
         function getGameUrl(gameId) {
-            // Codifica lo stato della partita nell'URL per condivisione cross-device
+            // Per mobile, creiamo URL più corti usando un approccio ibrido
+            const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+            
+            console.log('=== GENERAZIONE LINK ===');
+            console.log('È mobile:', isMobile);
+            
+            if (isMobile || window.location.href.length > 1500) {
+                // URL corto per mobile - salva i dati con una chiave specifica
+                const gameData = {
+                    gameId: gameState.gameId,
+                    players: gameState.players,
+                    board: gameState.board,
+                    currentPlayer: gameState.currentPlayer,
+                    moveHistory: gameState.moveHistory,
+                    gameActive: gameState.gameActive,
+                    gameEnded: gameState.gameEnded,
+                    castlingRights: gameState.castlingRights,
+                    enPassantTarget: gameState.enPassantTarget
+                };
+
+                // Salva i dati della partita con una chiave specifica
+                const gameKey = 'game_data_' + gameId;
+                localStorage.setItem(gameKey, JSON.stringify(gameData));
+                console.log('Dati salvati con chiave:', gameKey);
+
+                // Crea URL corto
+                const baseUrl = getBaseUrl();
+                const shortUrl = baseUrl + '?game=' + gameId + '&mobile=1';
+                console.log('URL corto generato:', shortUrl);
+                return shortUrl;
+            }
+
+            // URL lungo per desktop (come prima)
             const gameData = {
                 gameId: gameState.gameId,
                 players: gameState.players,
@@ -571,31 +603,28 @@
                 enPassantTarget: gameState.enPassantTarget
             };
 
-            console.log('=== GENERAZIONE LINK ===');
-            console.log('Dati da codificare:', gameData);
-            console.log('currentPlayer nei dati:', gameData.currentPlayer);
-            console.log('Numero mosse nei dati:', gameData.moveHistory.length);
-
             const encodedData = encodeURIComponent(JSON.stringify(gameData));
-            console.log('Dati codificati (primi 200 caratteri):', encodedData.substring(0, 200));
+            const baseUrl = getBaseUrl();
+            const longUrl = baseUrl + '?game=' + gameId + '&data=' + encodedData;
+            
+            console.log('URL lungo generato per desktop');
+            return longUrl;
+        }
 
+        function getBaseUrl() {
             // Prima prova a usare l'URL del form di input
             const customUrl = document.getElementById('base-url')?.value;
             if (customUrl && customUrl.trim()) {
-                const baseUrl = customUrl.trim().replace(/\/$/, '');
-                const finalUrl = baseUrl + '?game=' + gameId + '&data=' + encodedData;
-                console.log('URL finale generato:', finalUrl.substring(0, 200) + '...');
-                return finalUrl;
+                return customUrl.trim().replace(/\/$/, '');
             }
             
             // Poi prova a usare l'URL salvato nello stato
             if (gameState.baseUrl) {
-                const baseUrl = gameState.baseUrl.replace(/\/$/, '');
-                return baseUrl + '?game=' + gameId + '&data=' + encodedData;
+                return gameState.baseUrl.replace(/\/$/, '');
             }
             
             // Fallback all'URL corrente 
-            return window.location.origin + window.location.pathname + '?game=' + gameId + '&data=' + encodedData;
+            return window.location.origin + window.location.pathname;
         }
 
         // Gestione URL e parametri
@@ -1114,17 +1143,23 @@
         }
 
         function showUpdatedGameLink() {
-            // Dopo ogni mossa, mostra messaggio di successo senza link duplicato
+            // Dopo ogni mossa, mostra messaggio di successo semplice
             if (gameState.gameActive) {
                 const currentPlayerName = gameState.players[gameState.currentPlayer];
+                const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+                
+                let instructions = '🔗 Il link aggiornato è nella sezione blu sopra!';
+                if (isMobile) {
+                    instructions += '\n📱 Link ottimizzato per dispositivi mobili.';
+                }
                 
                 const linkMessage = `
                     <div class="status-message status-success" style="position: relative;">
                         <button onclick="this.parentElement.style.display='none'" style="position: absolute; top: 5px; right: 10px; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
                         <h4>🔄 Mossa Effettuata!</h4>
                         <p><strong>Tocca a: ${currentPlayerName}</strong></p>
-                        <p>🔗 Il link aggiornato è già visibile nella sezione blu sopra!</p>
-                        <p><em>💡 Condividi il link dalla sezione blu per far giocare l'avversario</em></p>
+                        <p>${instructions}</p>
+                        <p><em>💡 Condividi il link per far giocare l'avversario</em></p>
                     </div>
                 `;
                 
@@ -1141,24 +1176,61 @@
         }
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('📋 Link copiato negli appunti!');
-            }).catch(() => {
-                // Fallback per browser più vecchi
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    console.log('Link copiato con Clipboard API');
+                }).catch(() => {
+                    console.log('Errore Clipboard API, usando fallback');
+                    fallbackCopyText(text);
+                });
+            } else {
+                console.log('Clipboard API non supportata, usando fallback');
+                fallbackCopyText(text);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            // Fallback per browser più vecchi
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
                 document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('📋 Link copiato negli appunti!');
-            });
+                console.log('Link copiato con execCommand');
+            } catch (err) {
+                console.error('Errore nella copia:', err);
+            }
+            
+            document.body.removeChild(textArea);
         }
 
         function copyCurrentLink() {
             const linkField = document.getElementById('current-game-url');
             if (linkField && linkField.value) {
+                const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+                const isMobileLink = linkField.value.includes('&mobile=1');
+                
                 copyToClipboard(linkField.value);
+                
+                // Feedback specifico per tipo di link
+                let message = '📋 Link copiato negli appunti!';
+                if (isMobileLink) {
+                    message += '\n\n📱 Questo è un link ottimizzato per mobile.';
+                } else if (isMobile) {
+                    message += '\n\n⚠️ Attenzione: stai copiando un link desktop su mobile. Se non funziona, riprova a generare il link.';
+                }
+                
+                // Sostituisci alert con messaggio temporaneo
+                showMessage('game-status', message, 'success');
+                setTimeout(() => {
+                    updateGameInfo(); // Pulisci il messaggio
+                }, 3000);
             }
         }
 
@@ -1173,16 +1245,29 @@
                 // Mostra info debug sulla lunghezza URL
                 if (lengthInfo) {
                     const urlLength = currentUrl.length;
-                    const dataParam = getUrlParameter('data') || '';
-                    lengthInfo.textContent = `Debug: URL ${urlLength} caratteri, Data ${dataParam.length} caratteri`;
+                    const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+                    const isMobileLink = currentUrl.includes('&mobile=1');
+                    
+                    let infoText = `Debug: URL ${urlLength} caratteri`;
+                    
+                    if (isMobileLink) {
+                        infoText += ' 📱 (Link Mobile Ottimizzato)';
+                        lengthInfo.style.color = '#0066cc';
+                    } else if (isMobile) {
+                        infoText += ' 📱 (Desktop Link su Mobile - potrebbe non funzionare)';
+                        lengthInfo.style.color = '#ff6600';
+                    } else {
+                        infoText += ' 💻 (Link Desktop)';
+                        lengthInfo.style.color = '#666';
+                    }
                     
                     // Avvisa se l'URL è troppo lungo
                     if (urlLength > 2000) {
+                        infoText += ' ⚠️ URL potrebbe essere troppo lungo!';
                         lengthInfo.style.color = 'red';
-                        lengthInfo.textContent += ' ⚠️ URL potrebbe essere troppo lungo!';
-                    } else {
-                        lengthInfo.style.color = '#666';
                     }
+                    
+                    lengthInfo.textContent = infoText;
                 }
             }
         }
@@ -1430,30 +1515,56 @@
 
         // Persistenza dati
         function saveGameState() {
-            // Solo l'admin può salvare permanentemente lo stato
+            // Salvataggio standard
             if (gameState.isAdmin) {
                 localStorage.setItem('chessGameState', JSON.stringify(gameState));
-                console.log('Stato salvato (Admin):', gameState.gameId, 'Admin:', gameState.isAdmin, 'Colore:', gameState.playerColor);
+                console.log('Stato salvato (Admin):', gameState.gameId);
             } else {
                 // Gli invitati salvano solo i dati della partita senza sovrascrivere l'admin
                 const currentSaved = localStorage.getItem('chessGameState');
                 if (currentSaved) {
-                    const currentState = JSON.parse(currentSaved);
-                    // Aggiorna solo i dati di gioco, mantiene isAdmin e playerColor dell'admin
-                    const updatedState = {
-                        ...currentState,
-                        board: gameState.board,
-                        currentPlayer: gameState.currentPlayer,
-                        gameActive: gameState.gameActive,
-                        moveHistory: gameState.moveHistory,
-                        gameEnded: gameState.gameEnded,
-                        castlingRights: gameState.castlingRights,
-                        enPassantTarget: gameState.enPassantTarget,
-                        halfMoveClock: gameState.halfMoveClock,
-                        fullMoveNumber: gameState.fullMoveNumber
-                    };
-                    localStorage.setItem('chessGameState', JSON.stringify(updatedState));
-                    console.log('Dati partita aggiornati (Invitato):', gameState.gameId);
+                    try {
+                        const currentState = JSON.parse(currentSaved);
+                        const updatedState = {
+                            ...currentState,
+                            board: gameState.board,
+                            currentPlayer: gameState.currentPlayer,
+                            gameActive: gameState.gameActive,
+                            moveHistory: gameState.moveHistory,
+                            gameEnded: gameState.gameEnded,
+                            castlingRights: gameState.castlingRights,
+                            enPassantTarget: gameState.enPassantTarget,
+                            halfMoveClock: gameState.halfMoveClock,
+                            fullMoveNumber: gameState.fullMoveNumber
+                        };
+                        localStorage.setItem('chessGameState', JSON.stringify(updatedState));
+                        console.log('Dati partita aggiornati (Invitato):', gameState.gameId);
+                    } catch (error) {
+                        console.error('Errore nell\'aggiornamento stato invitato:', error);
+                    }
+                }
+            }
+
+            // Salvataggio aggiuntivo con chiave specifica per condivisione mobile
+            if (gameState.gameId && gameState.gameActive) {
+                const gameKey = 'game_data_' + gameState.gameId;
+                const gameData = {
+                    gameId: gameState.gameId,
+                    players: gameState.players,
+                    board: gameState.board,
+                    currentPlayer: gameState.currentPlayer,
+                    moveHistory: gameState.moveHistory,
+                    gameActive: gameState.gameActive,
+                    gameEnded: gameState.gameEnded,
+                    castlingRights: gameState.castlingRights,
+                    enPassantTarget: gameState.enPassantTarget
+                };
+                
+                try {
+                    localStorage.setItem(gameKey, JSON.stringify(gameData));
+                    console.log('Dati partita salvati per condivisione mobile con chiave:', gameKey);
+                } catch (error) {
+                    console.error('Errore nel salvataggio dati mobile:', error);
                 }
             }
         }
@@ -1474,6 +1585,11 @@
         function initializeApp() {
             // Controlla se c'è un link di partita nell'URL
             const gameId = getUrlParameter('game');
+            
+            console.log('=== INIZIALIZZAZIONE APP ===');
+            console.log('User Agent:', navigator.userAgent);
+            console.log('URL completo:', window.location.href);
+            console.log('URL length:', window.location.href.length);
             
             if (gameId) {
                 // Accesso tramite link partita
@@ -1497,29 +1613,43 @@
                             gameState.playerColor = 'white';
                             gameState.isAdmin = true;
                             console.log('🎯 È IL TURNO DEL BIANCO: Assegnato BIANCO/Admin');
-                            console.log('🔥 playerColor impostato a:', gameState.playerColor);
-                            console.log('🔥 isAdmin impostato a:', gameState.isAdmin);
                         } else {
                             gameState.playerColor = 'black';  
                             gameState.isAdmin = false;
                             console.log('🎯 È IL TURNO DEL NERO: Assegnato NERO/Invitato');
-                            console.log('🔥 playerColor impostato a:', gameState.playerColor);
-                            console.log('🔥 isAdmin impostato a:', gameState.isAdmin);
                         }
                         
                         console.log('=== STATO FINALE PRIMA DI SHOWGAME ===');
                         console.log('currentPlayer:', gameState.currentPlayer);
                         console.log('playerColor:', gameState.playerColor);
                         console.log('isAdmin:', gameState.isAdmin);
-                        console.log('canPlayerMove will be:', gameState.playerColor === gameState.currentPlayer);
                         
                         showGame();
                         
                     } else {
-                        // Partita non trovata o non valida
+                        // Partita non trovata o non valida - mostra errore dettagliato
                         console.log('=== ERRORE CARICAMENTO ===');
+                        console.log('gameLoaded:', gameLoaded);
+                        console.log('gameId match:', gameState.gameId, '===', gameId, '→', gameState.gameId === gameId);
+                        console.log('gameActive:', gameState.gameActive);
+                        
                         showScreen('error-screen');
-                        document.getElementById('error-message').textContent = 'Link partita non valido o partita non trovata.';
+                        
+                        let errorMsg = 'Link partita non valido.';
+                        if (!gameLoaded) {
+                            errorMsg += ' Impossibile caricare i dati della partita dall\'URL.';
+                        } else if (gameState.gameId !== gameId) {
+                            errorMsg += ` ID partita non corrispondente (atteso: ${gameId}, trovato: ${gameState.gameId}).`;
+                        } else if (!gameState.gameActive) {
+                            errorMsg += ' La partita non è attiva.';
+                        }
+                        
+                        // Su mobile, aggiungi suggerimento
+                        if (/iPad|iPhone|iPod|Android/i.test(navigator.userAgent)) {
+                            errorMsg += '\n\n📱 Suggerimento: Su dispositivi mobili, prova a copiare il link e aprirlo in una nuova scheda.';
+                        }
+                        
+                        document.getElementById('error-message').textContent = errorMsg;
                     }
                 }, 1000);
             } else {
@@ -1537,34 +1667,77 @@
 
         // Carica solo i dati della partita senza stato admin
         function loadGameDataOnly() {
-            // Prima prova a caricare dai parametri URL
-            const urlGameData = getUrlParameter('data');
-            console.log('=== CARICAMENTO DA URL ===');
-            console.log('Parametro data trovato:', !!urlGameData);
+            const gameId = getUrlParameter('game');
+            const isMobileLink = getUrlParameter('mobile') === '1';
             
+            console.log('=== CARICAMENTO DA URL ===');
+            console.log('gameId:', gameId);
+            console.log('isMobileLink:', isMobileLink);
+            
+            // Prova prima il metodo mobile (localStorage con chiave specifica)
+            if (isMobileLink && gameId) {
+                console.log('=== TENTATIVO CARICAMENTO MOBILE ===');
+                const gameKey = 'game_data_' + gameId;
+                const savedGameData = localStorage.getItem(gameKey);
+                
+                if (savedGameData) {
+                    try {
+                        const gameData = JSON.parse(savedGameData);
+                        console.log('✅ Dati caricati da localStorage mobile');
+                        console.log('currentPlayer dai dati:', gameData.currentPlayer);
+                        console.log('Numero mosse:', gameData.moveHistory ? gameData.moveHistory.length : 0);
+                        
+                        gameState = {
+                            board: gameData.board,
+                            currentPlayer: gameData.currentPlayer,
+                            gameActive: gameData.gameActive,
+                            selectedSquare: null,
+                            moveHistory: gameData.moveHistory || [],
+                            players: gameData.players || { white: 'Bianco', black: 'Nero' },
+                            gameId: gameData.gameId,
+                            isAdmin: false,
+                            playerColor: null,
+                            baseUrl: null,
+                            gameEnded: gameData.gameEnded || false,
+                            castlingRights: gameData.castlingRights || {
+                                white: { kingside: true, queenside: true },
+                                black: { kingside: true, queenside: true }
+                            },
+                            enPassantTarget: gameData.enPassantTarget || null,
+                            halfMoveClock: 0,
+                            fullMoveNumber: 1
+                        };
+                        
+                        return true;
+                    } catch (error) {
+                        console.error('Errore parsing dati mobile:', error);
+                    }
+                } else {
+                    console.log('Nessun dato trovato con chiave:', gameKey);
+                }
+            }
+
+            // Metodo classico: dati nell'URL
+            const urlGameData = getUrlParameter('data');
             if (urlGameData) {
+                console.log('=== TENTATIVO CARICAMENTO URL CLASSICO ===');
                 console.log('Lunghezza data raw:', urlGameData.length);
                 
                 try {
-                    console.log('Tentativo di decodificare...');
                     const decodedData = JSON.parse(decodeURIComponent(urlGameData));
-                    console.log('=== DATI DECODIFICATI CON SUCCESSO ===');
-                    console.log('gameId:', decodedData.gameId);
-                    console.log('🔥 currentPlayer NEI DATI:', decodedData.currentPlayer);
-                    console.log('gameActive nei dati:', decodedData.gameActive);
-                    console.log('Numero di mosse nei dati:', decodedData.moveHistory ? decodedData.moveHistory.length : 0);
-                    console.log('Ultima mossa:', decodedData.moveHistory ? decodedData.moveHistory[decodedData.moveHistory.length - 1] : 'nessuna');
+                    console.log('✅ Dati decodificati da URL');
+                    console.log('currentPlayer NEI DATI:', decodedData.currentPlayer);
                     
                     gameState = {
                         board: decodedData.board,
                         currentPlayer: decodedData.currentPlayer,
                         gameActive: decodedData.gameActive,
-                        selectedSquare: null, // Reset selezione
+                        selectedSquare: null,
                         moveHistory: decodedData.moveHistory || [],
                         players: decodedData.players || { white: 'Bianco', black: 'Nero' },
                         gameId: decodedData.gameId,
-                        isAdmin: false, // FORZA false per i link
-                        playerColor: null, // Verrà impostato dopo
+                        isAdmin: false,
+                        playerColor: null,
                         baseUrl: null,
                         gameEnded: decodedData.gameEnded || false,
                         castlingRights: decodedData.castlingRights || {
@@ -1576,50 +1749,48 @@
                         fullMoveNumber: 1
                     };
                     
-                    console.log('=== STATO CARICATO ===');
-                    console.log('🔥 gameState.currentPlayer DOPO CARICAMENTO:', gameState.currentPlayer);
                     return true;
                 } catch (error) {
-                    console.error('=== ERRORE PARSING DATI URL ===');
-                    console.error('Errore:', error);
+                    console.error('Errore parsing dati URL:', error);
                 }
-            } else {
-                console.log('Parametro data non trovato nell\'URL');
             }
 
-            // Fallback: prova localStorage (per compatibilità)
+            // Fallback: localStorage generico
             console.log('=== TENTATIVO FALLBACK LOCALSTORAGE ===');
             const saved = localStorage.getItem('chessGameState');
             if (saved) {
-                const loadedState = JSON.parse(saved);
-                console.log('Dati trovati in localStorage');
-                
-                gameState = {
-                    board: loadedState.board,
-                    currentPlayer: loadedState.currentPlayer,
-                    gameActive: loadedState.gameActive,
-                    selectedSquare: null,
-                    moveHistory: loadedState.moveHistory || [],
-                    players: loadedState.players || { white: 'Bianco', black: 'Nero' },
-                    gameId: loadedState.gameId,
-                    isAdmin: false,
-                    playerColor: null,
-                    baseUrl: loadedState.baseUrl,
-                    gameEnded: loadedState.gameEnded || false,
-                    castlingRights: loadedState.castlingRights || {
-                        white: { kingside: true, queenside: true },
-                        black: { kingside: true, queenside: true }
-                    },
-                    enPassantTarget: loadedState.enPassantTarget || null,
-                    halfMoveClock: loadedState.halfMoveClock || 0,
-                    fullMoveNumber: loadedState.fullMoveNumber || 1
-                };
-                
-                console.log('Dati partita caricati da localStorage (fallback)');
-                return true;
+                try {
+                    const loadedState = JSON.parse(saved);
+                    console.log('✅ Dati trovati in localStorage generico');
+                    
+                    gameState = {
+                        board: loadedState.board,
+                        currentPlayer: loadedState.currentPlayer,
+                        gameActive: loadedState.gameActive,
+                        selectedSquare: null,
+                        moveHistory: loadedState.moveHistory || [],
+                        players: loadedState.players || { white: 'Bianco', black: 'Nero' },
+                        gameId: loadedState.gameId,
+                        isAdmin: false,
+                        playerColor: null,
+                        baseUrl: loadedState.baseUrl,
+                        gameEnded: loadedState.gameEnded || false,
+                        castlingRights: loadedState.castlingRights || {
+                            white: { kingside: true, queenside: true },
+                            black: { kingside: true, queenside: true }
+                        },
+                        enPassantTarget: loadedState.enPassantTarget || null,
+                        halfMoveClock: loadedState.halfMoveClock || 0,
+                        fullMoveNumber: loadedState.fullMoveNumber || 1
+                    };
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Errore parsing localStorage:', error);
+                }
             }
             
-            console.log('=== NESSUN DATO TROVATO ===');
+            console.log('❌ NESSUN DATO TROVATO');
             return false;
         }
 
