@@ -1274,30 +1274,50 @@
             const gameId = getUrlParameter('game');
             
             if (gameId) {
-                // Accesso tramite link partita - SEMPRE giocatore invitato
+                // Accesso tramite link partita
                 console.log('=== ACCESSO TRAMITE LINK ===');
                 console.log('gameId dall\'URL:', gameId);
-                
-                // Controlla se ci sono dati nell'URL
-                const urlData = getUrlParameter('data');
-                console.log('Parametro data presente:', !!urlData);
-                console.log('Lunghezza data:', urlData ? urlData.length : 0);
                 
                 showScreen('loading-screen');
                 
                 setTimeout(() => {
-                    // Carica solo i dati della partita, ignora stato admin
+                    // Carica i dati della partita
                     const gameLoaded = loadGameDataOnly();
                     
                     if (gameLoaded && gameState.gameId === gameId && gameState.gameActive) {
-                        // FORZA il giocatore come invitato (nero) anche se è lo stesso browser
-                        gameState.playerColor = 'black';
-                        gameState.isAdmin = false;
-                        console.log('=== INVITATO CARICATO ===');
-                        console.log('Giocatore invitato forzato - Colore:', gameState.playerColor);
-                        console.log('Current player dalla partita:', gameState.currentPlayer);
-                        console.log('Numero di mosse:', gameState.moveHistory.length);
+                        
+                        // LOGICA CORRETTA: Chi apre il link?
+                        console.log('=== DETERMINAZIONE RUOLO ===');
+                        
+                        // Controlla se l'utente era già admin di questa partita
+                        const savedState = localStorage.getItem('chessGameState');
+                        let wasAdminOfThisGame = false;
+                        
+                        if (savedState) {
+                            try {
+                                const saved = JSON.parse(savedState);
+                                wasAdminOfThisGame = saved.isAdmin && saved.gameId === gameId;
+                                console.log('Era admin di questa partita:', wasAdminOfThisGame);
+                            } catch (e) {
+                                console.log('Errore nel controllare stato salvato:', e);
+                            }
+                        }
+                        
+                        if (wasAdminOfThisGame) {
+                            // L'admin che torna alla sua partita → BIANCO
+                            gameState.playerColor = 'white';
+                            gameState.isAdmin = true;
+                            console.log('🎯 ADMIN CHE TORNA: Assegnato colore BIANCO');
+                        } else {
+                            // Nuovo invitato → NERO  
+                            gameState.playerColor = 'black';
+                            gameState.isAdmin = false;
+                            console.log('🎯 NUOVO INVITATO: Assegnato colore NERO');
+                        }
+                        
+                        console.log('Final state - isAdmin:', gameState.isAdmin, 'playerColor:', gameState.playerColor);
                         showGame();
+                        
                     } else {
                         // Partita non trovata o non valida
                         console.log('=== ERRORE CARICAMENTO ===');
