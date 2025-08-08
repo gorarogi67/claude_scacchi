@@ -1653,15 +1653,15 @@
             
             // Verifica scacco/scacco matto
             const inCheck = isKingInCheck(gameState.currentPlayer, gameState.board);
-            const isCheckmate = inCheck && isCheckmate(gameState.currentPlayer);
-            const isStalemate = !inCheck && isStalemate(gameState.currentPlayer);
+            const hasCheckmate = inCheck && isCheckmate(gameState.currentPlayer);
+            const hasStalemate = !inCheck && isStalemate(gameState.currentPlayer);
             
             // Aggiorna l'ultima mossa con scacco/matto
             if (gameState.moveHistory.length > 0) {
                 const lastMoveIndex = gameState.moveHistory.length - 1;
                 let lastMove = gameState.moveHistory[lastMoveIndex];
                 
-                if (isCheckmate) {
+                if (hasCheckmate) {
                     lastMove += '#';
                 } else if (inCheck) {
                     lastMove += '+';
@@ -1676,12 +1676,12 @@
             updateMovesHistory();
             
             // Controlla fine partita
-            if (isCheckmate) {
+            if (hasCheckmate) {
                 gameState.gameEnded = true;
                 gameState.result = `Scacco matto! Vince ${gameState.players[previousPlayer]}`;
                 showMessage('game-status', gameState.result, 'success');
                 await saveGameToFirebase();
-            } else if (isStalemate) {
+            } else if (hasStalemate) {
                 gameState.gameEnded = true;
                 gameState.result = 'Partita patta per stallo';
                 showMessage('game-status', gameState.result, 'warning');
