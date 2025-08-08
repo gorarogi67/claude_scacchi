@@ -602,6 +602,11 @@
 
             <div class="game-info" id="admin-controls" style="display:none;">
                 <h3>Controlli Amministratore</h3>
+                <label>
+                    <input type="checkbox" id="admin-override-mode" onchange="toggleAdminMode()">
+                    <strong>Modalità Amministratore</strong> (muovi qualsiasi pezzo)
+                </label>
+                <br><br>
                 <button class="btn btn-success" onclick="endGame('white')">🏆 Vittoria Bianco</button>
                 <button class="btn btn-success" onclick="endGame('black')">🏆 Vittoria Nero</button>
                 <button class="btn btn-secondary" onclick="endGame('draw')">🤝 Pareggio</button>
@@ -784,6 +789,7 @@
                 players: { white: 'Giocatore Bianco', black: 'Giocatore Nero' },
                 gameId: null,
                 isAdmin: false,
+                adminOverrideMode: false,
                 playerColor: null,
                 gameEnded: false,
                 result: null,
@@ -1147,7 +1153,10 @@
                         const [color, pieceType] = piece;
                         square.textContent = chessPieces[color][pieceType];
                         
-                        if (gameState.playerColor && color !== gameState.playerColor && !gameState.isAdmin) {
+                        // Marca come non giocabili i pezzi che non sono del giocatore corrente
+                        // (a meno che non sia attiva la modalità admin override)
+                        if (gameState.playerColor && color !== gameState.playerColor && 
+                            !(gameState.isAdmin && gameState.adminOverrideMode)) {
                             square.classList.add('not-playable');
                         }
                         
@@ -1189,8 +1198,10 @@
             
             if (gameState.selectedSquare === null) {
                 // PRIMO CLICK: Selezione pezzo
-                if (piece && piece[0] === gameState.currentPlayer && 
-                    (gameState.isAdmin || piece[0] === gameState.playerColor)) {
+                const canSelectPiece = piece && piece[0] === gameState.currentPlayer && 
+                    (piece[0] === gameState.playerColor || (gameState.isAdmin && gameState.adminOverrideMode));
+                    
+                if (canSelectPiece) {
                     gameState.selectedSquare = logicalIndex;
                     if (clickedSquare) {
                         clickedSquare.classList.add('selected');
@@ -1201,7 +1212,13 @@
                     if (navigator.vibrate) navigator.vibrate(50);
                     console.log('🎯 Pezzo selezionato:', piece, 'alla posizione', indexToAlgebraic(logicalIndex));
                 } else {
-                    console.log('❌ Non puoi selezionare questo pezzo');
+                    if (piece && piece[0] !== gameState.currentPlayer) {
+                        console.log('❌ Non è il turno di questo colore');
+                    } else if (piece && piece[0] !== gameState.playerColor && !gameState.adminOverrideMode) {
+                        console.log('❌ Non puoi muovere i pezzi dell\'avversario (attiva Modalità Admin per farlo)');
+                    } else {
+                        console.log('❌ Non puoi selezionare questo pezzo');
+                    }
                 }
             } else {
                 // SECONDO CLICK: Tentativo di mossa o nuova selezione
@@ -1212,26 +1229,52 @@
                     console.log('✅ Mossa valida da', indexToAlgebraic(gameState.selectedSquare), 'a', indexToAlgebraic(logicalIndex));
                     makeMove(gameState.selectedSquare, logicalIndex);
                     gameState.selectedSquare = null; // Reset dopo mossa
-                } else if (piece && piece[0] === gameState.currentPlayer && 
-                          (gameState.isAdmin || piece[0] === gameState.playerColor)) {
-                    // SELEZIONE NUOVO PEZZO
-                    console.log('🔄 Nuovo pezzo selezionato:', piece);
-                    gameState.selectedSquare = logicalIndex;
-                    if (clickedSquare) {
-                        clickedSquare.classList.add('selected');
-                    }
-                    highlightPossibleMoves(logicalIndex);
                 } else {
-                    // CLICK SU CASELLA NON VALIDA - Deseleziona
-                    console.log('❌ Click non valido, deselezionando');
-                    gameState.selectedSquare = null;
+                    const canSelectNewPiece = piece && piece[0] === gameState.currentPlayer && 
+                        (piece[0] === gameState.playerColor || (gameState.isAdmin && gameState.adminOverrideMode));
+                        
+                    if (canSelectNewPiece) {
+                        // SELEZIONE NUOVO PEZZO
+                        console.log('🔄 Nuovo pezzo selezionato:', piece);
+                        gameState.selectedSquare = logicalIndex;
+                        if (clickedSquare) {
+                            clickedSquare.classList.add('selected');
+                        }
+                        highlightPossibleMoves(logicalIndex);
+                    } else {
+                        // CLICK SU CASELLA NON VALIDA - Deseleziona
+                        console.log('❌ Click non valido, deselezionando');
+                        gameState.selectedSquare = null;
+                    }
                 }
             }
         }
 
+        function toggleAdminMode() {
+            const checkbox = document.getElementById('admin-override-mode');
+            gameState.adminOverrideMode = checkbox.checked;
+            console.log('🔧 Modalità Admin Override:', gameState.adminOverrideMode);
+            
+            if (gameState.adminOverrideMode) {
+                showMessage('game-status', '⚠️ Modalità Amministratore: puoi muovere qualsiasi pezzo', 'warning');
+            } else {
+                showMessage('game-status', '✅ Modalità normale: rispetta i turni', 'success');
+            }
+            
+            // Aggiorna la visualizzazione della scacchiera
+            renderBoard();
+        }
+
         function canPlayerMove() {
-            const canMove = gameState.isAdmin || gameState.playerColor === gameState.currentPlayer;
-            console.log('🔍 Può muovere?', canMove, '| isAdmin:', gameState.isAdmin, '| playerColor:', gameState.playerColor, '| currentPlayer:', gameState.currentPlayer);
+            // Modalità admin override: può sempre muovere
+            if (gameState.isAdmin && gameState.adminOverrideMode) {
+                console.log('🔧 Admin override attivo - può muovere sempre');
+                return true;
+            }
+            
+            // Modalità normale: solo il giocatore del turno corrente può muovere
+            const canMove = gameState.playerColor === gameState.currentPlayer;
+            console.log('🔍 Può muovere?', canMove, '| playerColor:', gameState.playerColor, '| currentPlayer:', gameState.currentPlayer);
             return canMove;
         }
 
@@ -1874,6 +1917,32 @@
             updateGameInfo();
             showMessage('game-status', resultText, 'success');
         }
+
+        // === DEBUG TEST IMMEDIATO ===
+        window.testChessMove = function() {
+            console.log('🧪 TEST: Stato gioco attuale:');
+            console.log('- gameActive:', gameState.gameActive);
+            console.log('- currentPlayer:', gameState.currentPlayer);
+            console.log('- playerColor:', gameState.playerColor);
+            console.log('- isAdmin:', gameState.isAdmin);
+            console.log('- selectedSquare:', gameState.selectedSquare);
+            console.log('- board[52] (e2):', gameState.board[52]);
+            console.log('- board[44] (e3):', gameState.board[44]);
+            
+            // Test diretto movimento e2-e3
+            if (gameState.board[52] && gameState.board[52][1] === 'pawn') {
+                console.log('🧪 TEST: Simulando mossa e2-e3');
+                const isValid = isValidMove(52, 44);
+                console.log('🧪 TEST: Mossa valida?', isValid);
+                
+                if (isValid) {
+                    console.log('🧪 TEST: Eseguendo mossa...');
+                    makeMove(52, 44);
+                }
+            } else {
+                console.log('🧪 TEST: Nessun pedone in e2');
+            }
+        };
 
         // === INITIALIZATION ===
         async function initializeApp() {
