@@ -1116,20 +1116,18 @@
                 for (let r = 0; r < 8; r++) {
                     for (let c = 0; c < 8; c++) {
                         const square = document.createElement('div');
-                        const index = r * 8 + c;
+                        const visualIndex = r * 8 + c;
                         const isWhiteSquare = (r + c) % 2 === 0;
                         
                         square.className = `square ${isWhiteSquare ? 'white' : 'black'}`;
-                        square.dataset.index = index;
                         square.setAttribute('role', 'gridcell');
                         square.setAttribute('tabindex', '0');
-                        square.setAttribute('aria-label', indexToAlgebraic(index));
                         
-                        square.onclick = () => handleSquareClick(index);
+                        square.onclick = () => handleSquareClick(visualIndex);
                         square.onkeydown = (e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                handleSquareClick(index);
+                                handleSquareClick(visualIndex);
                             }
                         };
                         
@@ -1139,15 +1137,17 @@
             }
             
             // Aggiorna contenuto delle caselle
-            for (let r = 0; r < 8; r++) {
-                for (let c = 0; c < 8; c++) {
-                    const displayRow = isWhitePlayer ? r : 7 - r;
-                    const displayCol = isWhitePlayer ? c : 7 - c;
-                    const boardIndex = displayRow * 8 + displayCol;
-                    const squareIndex = r * 8 + c;
+            for (let visualRow = 0; visualRow < 8; visualRow++) {
+                for (let visualCol = 0; visualCol < 8; visualCol++) {
+                    const visualIndex = visualRow * 8 + visualCol;
+                    const square = board.children[visualIndex];
                     
-                    const square = board.children[squareIndex];
-                    const piece = gameState.board[boardIndex];
+                    // Calcola l'indice logico della scacchiera basato sull'orientamento
+                    const logicalRow = isWhitePlayer ? visualRow : 7 - visualRow;
+                    const logicalCol = isWhitePlayer ? visualCol : 7 - visualCol;
+                    const logicalIndex = logicalRow * 8 + logicalCol;
+                    
+                    const piece = gameState.board[logicalIndex];
                     
                     // Reset classi speciali
                     square.className = square.className.replace(/\b(selected|possible-move|possible-capture|not-playable|in-check)\b/g, '').trim();
@@ -1156,7 +1156,7 @@
                     if (piece) {
                         const [color, pieceType] = piece;
                         square.textContent = chessPieces[color][pieceType];
-                        square.setAttribute('aria-label', `${indexToAlgebraic(boardIndex)}: ${color} ${pieceType}`);
+                        square.setAttribute('aria-label', `${indexToAlgebraic(logicalIndex)}: ${color} ${pieceType}`);
                         
                         if (gameState.playerColor && color !== gameState.playerColor && !gameState.isAdmin) {
                             square.classList.add('not-playable');
@@ -1168,22 +1168,24 @@
                         }
                     } else {
                         square.textContent = '';
-                        square.setAttribute('aria-label', indexToAlgebraic(boardIndex));
+                        square.setAttribute('aria-label', indexToAlgebraic(logicalIndex));
                     }
                     
-                    square.dataset.boardIndex = boardIndex;
+                    // Salva l'indice logico per il click handling
+                    square.dataset.logicalIndex = logicalIndex;
                 }
             }
         }
 
-        function handleSquareClick(squareIndex) {
+        function handleSquareClick(visualIndex) {
             if (!gameState.gameActive || gameState.gameEnded) {
                 showMessage('game-status', '⚠️ La partita è terminata.', 'warning');
                 return;
             }
 
-            const square = document.querySelector(`[data-index="${squareIndex}"]`);
-            const boardIndex = parseInt(square.dataset.boardIndex);
+            const board = document.getElementById('chess-board');
+            const square = board.children[visualIndex];
+            const logicalIndex = parseInt(square.dataset.logicalIndex);
 
             if (!canPlayerMove()) {
                 showMessage('game-status', '⏳ Non è il tuo turno!', 'warning');
@@ -1195,29 +1197,29 @@
                 sq.classList.remove('selected', 'possible-move', 'possible-capture');
             });
 
-            const piece = gameState.board[boardIndex];
+            const piece = gameState.board[logicalIndex];
             
             if (gameState.selectedSquare === null) {
                 // Selezione pezzo
                 if (piece && piece[0] === gameState.currentPlayer && 
                     (gameState.isAdmin || piece[0] === gameState.playerColor)) {
-                    gameState.selectedSquare = boardIndex;
+                    gameState.selectedSquare = logicalIndex;
                     square.classList.add('selected');
-                    highlightPossibleMoves(boardIndex);
+                    highlightPossibleMoves(logicalIndex);
                     
                     // Feedback audio/vibrazione
                     if (navigator.vibrate) navigator.vibrate(50);
                 }
             } else {
                 // Tentativo di mossa
-                if (isValidMove(gameState.selectedSquare, boardIndex)) {
-                    makeMove(gameState.selectedSquare, boardIndex);
+                if (isValidMove(gameState.selectedSquare, logicalIndex)) {
+                    makeMove(gameState.selectedSquare, logicalIndex);
                 } else if (piece && piece[0] === gameState.currentPlayer && 
                           (gameState.isAdmin || piece[0] === gameState.playerColor)) {
                     // Selezione nuovo pezzo
-                    gameState.selectedSquare = boardIndex;
+                    gameState.selectedSquare = logicalIndex;
                     square.classList.add('selected');
-                    highlightPossibleMoves(boardIndex);
+                    highlightPossibleMoves(logicalIndex);
                 }
                 gameState.selectedSquare = null;
             }
@@ -1230,7 +1232,8 @@
         function highlightPossibleMoves(fromIndex) {
             for (let toIndex = 0; toIndex < 64; toIndex++) {
                 if (isValidMove(fromIndex, toIndex)) {
-                    const targetSquare = document.querySelector(`[data-board-index="${toIndex}"]`);
+                    // Trova la casella visuale che corrisponde a questo indice logico
+                    const targetSquare = document.querySelector(`[data-logical-index="${toIndex}"]`);
                     if (targetSquare) {
                         const isCapture = gameState.board[toIndex] || 
                                         (gameState.board[fromIndex][1] === 'pawn' && gameState.enPassantTarget === toIndex);
