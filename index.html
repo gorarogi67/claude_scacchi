@@ -1200,33 +1200,43 @@
             const piece = gameState.board[logicalIndex];
             
             if (gameState.selectedSquare === null) {
-                // Selezione pezzo
+                // PRIMO CLICK: Selezione pezzo
                 if (piece && piece[0] === gameState.currentPlayer && 
                     (gameState.isAdmin || piece[0] === gameState.playerColor)) {
                     gameState.selectedSquare = logicalIndex;
                     square.classList.add('selected');
                     highlightPossibleMoves(logicalIndex);
                     
-                    // Feedback audio/vibrazione
+                    // Feedback
                     if (navigator.vibrate) navigator.vibrate(50);
+                    console.log('🎯 Pezzo selezionato:', piece, 'alla posizione', indexToAlgebraic(logicalIndex));
                 }
             } else {
-                // Tentativo di mossa
+                // SECONDO CLICK: Tentativo di mossa o nuova selezione
                 if (isValidMove(gameState.selectedSquare, logicalIndex)) {
+                    // MOSSA VALIDA - Esegui mossa
+                    console.log('✅ Mossa valida da', indexToAlgebraic(gameState.selectedSquare), 'a', indexToAlgebraic(logicalIndex));
                     makeMove(gameState.selectedSquare, logicalIndex);
+                    gameState.selectedSquare = null; // Reset dopo mossa
                 } else if (piece && piece[0] === gameState.currentPlayer && 
                           (gameState.isAdmin || piece[0] === gameState.playerColor)) {
-                    // Selezione nuovo pezzo
+                    // SELEZIONE NUOVO PEZZO
+                    console.log('🔄 Nuovo pezzo selezionato:', piece);
                     gameState.selectedSquare = logicalIndex;
                     square.classList.add('selected');
                     highlightPossibleMoves(logicalIndex);
+                } else {
+                    // CLICK SU CASELLA NON VALIDA - Deseleziona
+                    console.log('❌ Click non valido, deselezionando');
+                    gameState.selectedSquare = null;
                 }
-                gameState.selectedSquare = null;
             }
         }
 
         function canPlayerMove() {
-            return gameState.isAdmin || gameState.playerColor === gameState.currentPlayer;
+            const canMove = gameState.isAdmin || gameState.playerColor === gameState.currentPlayer;
+            console.log('🔍 Può muovere?', canMove, '| isAdmin:', gameState.isAdmin, '| playerColor:', gameState.playerColor, '| currentPlayer:', gameState.currentPlayer);
+            return canMove;
         }
 
         function highlightPossibleMoves(fromIndex) {
@@ -1244,14 +1254,26 @@
         }
 
         function isValidMove(from, to) {
-            if (from === to) return false;
-            if (from < 0 || from > 63 || to < 0 || to > 63) return false;
+            if (from === to) {
+                console.log('❌ Mossa non valida: stessa casella');
+                return false;
+            }
+            if (from < 0 || from > 63 || to < 0 || to > 63) {
+                console.log('❌ Mossa non valida: indici fuori range', from, to);
+                return false;
+            }
             
             const piece = gameState.board[from];
-            if (!piece || piece[0] !== gameState.currentPlayer) return false;
+            if (!piece || piece[0] !== gameState.currentPlayer) {
+                console.log('❌ Mossa non valida: pezzo non valido o non del giocatore corrente', piece, gameState.currentPlayer);
+                return false;
+            }
             
             const targetPiece = gameState.board[to];
-            if (targetPiece && targetPiece[0] === gameState.currentPlayer) return false;
+            if (targetPiece && targetPiece[0] === gameState.currentPlayer) {
+                console.log('❌ Mossa non valida: casella occupata da proprio pezzo');
+                return false;
+            }
             
             // Simula la mossa per controllare se lascia il re sotto scacco
             const tempBoard = JSON.parse(JSON.stringify(gameState.board));
@@ -1265,6 +1287,7 @@
             }
             
             if (isKingInCheck(gameState.currentPlayer, tempBoard)) {
+                console.log('❌ Mossa non valida: lascerebbe il re sotto scacco');
                 return false;
             }
 
@@ -1273,23 +1296,44 @@
             const toRow = Math.floor(to / 8), toCol = to % 8;
             const rowDiff = toRow - fromRow, colDiff = toCol - fromCol;
 
+            console.log('🔍 Validando mossa:', pieceType, 'da', indexToAlgebraic(from), 'a', indexToAlgebraic(to), 'diff:', rowDiff, colDiff);
+
             switch (pieceType) {
                 case 'pawn':
-                    return isValidPawnMove(from, to, color, fromRow, toRow, colDiff, targetPiece);
+                    const isValid = isValidPawnMove(from, to, color, fromRow, toRow, colDiff, targetPiece);
+                    console.log('🔍 Pedone valido:', isValid);
+                    return isValid;
                 case 'rook':
-                    return (rowDiff === 0 || colDiff === 0) && isPathClear(from, to);
+                    const rookValid = (rowDiff === 0 || colDiff === 0) && isPathClear(from, to);
+                    console.log('🔍 Torre valida:', rookValid);
+                    return rookValid;
                 case 'bishop':
-                    return Math.abs(rowDiff) === Math.abs(colDiff) && isPathClear(from, to);
+                    const bishopValid = Math.abs(rowDiff) === Math.abs(colDiff) && isPathClear(from, to);
+                    console.log('🔍 Alfiere valido:', bishopValid);
+                    return bishopValid;
                 case 'queen':
-                    return (rowDiff === 0 || colDiff === 0 || Math.abs(rowDiff) === Math.abs(colDiff)) && isPathClear(from, to);
+                    const queenValid = (rowDiff === 0 || colDiff === 0 || Math.abs(rowDiff) === Math.abs(colDiff)) && isPathClear(from, to);
+                    console.log('🔍 Regina valida:', queenValid);
+                    return queenValid;
                 case 'knight':
-                    return (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) || 
+                    const knightValid = (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) || 
                            (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2);
+                    console.log('🔍 Cavallo valido:', knightValid);
+                    return knightValid;
                 case 'king':
-                    if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) return true;
-                    if (rowDiff === 0 && Math.abs(colDiff) === 2) return canCastle(color, colDiff > 0);
+                    if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) {
+                        console.log('🔍 Re valido (movimento normale)');
+                        return true;
+                    }
+                    if (rowDiff === 0 && Math.abs(colDiff) === 2) {
+                        const castleValid = canCastle(color, colDiff > 0);
+                        console.log('🔍 Arrocco valido:', castleValid);
+                        return castleValid;
+                    }
+                    console.log('🔍 Re non valido');
                     return false;
             }
+            console.log('❌ Tipo pezzo non riconosciuto');
             return false;
         }
 
@@ -1298,17 +1342,33 @@
             const startRow = color === 'white' ? 6 : 1;
             const rowDiff = toRow - fromRow;
             
+            console.log('🔍 Pedone:', color, 'da riga', fromRow, 'a riga', toRow, 'direction:', direction, 'rowDiff:', rowDiff, 'colDiff:', colDiff);
+            
             if (colDiff === 0 && !targetPiece) {
                 // Movimento in avanti
-                if (rowDiff === direction) return true;
-                if (fromRow === startRow && rowDiff === 2 * direction && !gameState.board[from + 8 * direction]) return true;
+                if (rowDiff === direction) {
+                    console.log('✅ Pedone: movimento 1 casella valido');
+                    return true;
+                }
+                if (fromRow === startRow && rowDiff === 2 * direction && !gameState.board[from + 8 * direction]) {
+                    console.log('✅ Pedone: movimento 2 caselle dalla posizione iniziale valido');
+                    return true;
+                }
             }
             
             if (Math.abs(colDiff) === 1 && rowDiff === direction) {
                 // Cattura normale o en passant
-                return targetPiece || to === gameState.enPassantTarget;
+                if (targetPiece) {
+                    console.log('✅ Pedone: cattura normale valida');
+                    return true;
+                }
+                if (to === gameState.enPassantTarget) {
+                    console.log('✅ Pedone: cattura en passant valida');
+                    return true;
+                }
             }
             
+            console.log('❌ Pedone: mossa non valida');
             return false;
         }
 
