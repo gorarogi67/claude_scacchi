@@ -895,33 +895,7 @@
             100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
         }
 
-        /* TEST BUTTON per debug */
-        .test-controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            z-index: 9999;
-        }
 
-        .test-btn {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            margin: 2px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .test-btn:hover {
-            background: #ff5252;
-        }
     </style>
 </head>
 <body>
@@ -944,11 +918,11 @@
             <h2>Crea Nuova Partita</h2>
             <div class="form-group">
                 <label for="white-player">Nome Giocatore Bianco:</label>
-                <input type="text" id="white-player" value="Alice" placeholder="Nome giocatore bianco" maxlength="20">
+                <input type="text" id="white-player" value="Giocatore Bianco" placeholder="Nome giocatore bianco" maxlength="20">
             </div>
             <div class="form-group">
                 <label for="black-player">Nome Giocatore Nero:</label>
-                <input type="text" id="black-player" value="Bob" placeholder="Nome giocatore nero" maxlength="20">
+                <input type="text" id="black-player" value="Giocatore Nero" placeholder="Nome giocatore nero" maxlength="20">
             </div>
             <button class="btn" onclick="createGame()" id="create-game-btn">Crea Partita</button>
             <div id="admin-message"></div>
@@ -1399,53 +1373,7 @@
         }
 
         // === FUNZIONI DI TEST E DEBUG ===
-        function testCapturedPieces() {
-            console.log('🧪 TEST PEZZI CATTURATI:');
-            console.log('- Stato attuale capturedPieces:', gameState.capturedPieces);
-            console.log('- Valore materiale bianchi:', calculateMaterialValue('white'));
-            console.log('- Valore materiale neri:', calculateMaterialValue('black'));
-            
-            // Forza aggiornamento visualizzazione
-            updateCapturedPieces();
-            
-            alert('Test completato! Controlla la console per i dettagli.');
-        }
 
-        function simulateCapture() {
-            console.log('🧪 SIMULANDO CATTURE...');
-            
-            if (!gameState.capturedPieces) {
-                gameState.capturedPieces = { white: [], black: [] };
-            }
-            
-            // Aggiungi alcuni pezzi di test
-            const testPieces = [
-                ['white', 'pawn'],
-                ['white', 'knight'],
-                ['black', 'bishop'],
-                ['black', 'pawn'],
-                ['black', 'pawn'],
-                ['white', 'queen'],
-                ['black', 'rook']
-            ];
-            
-            testPieces.forEach(piece => {
-                addCapturedPiece(piece);
-            });
-            
-            console.log('✅ Catture simulate aggiunte');
-            showMessage('game-status', '🧪 Catture simulate aggiunte!', 'success');
-        }
-
-        function clearCaptures() {
-            console.log('🧪 RESET CATTURE...');
-            
-            gameState.capturedPieces = { white: [], black: [] };
-            updateCapturedPieces();
-            
-            console.log('✅ Catture resettate');
-            showMessage('game-status', '🧹 Catture resettate!', 'success');
-        }
 
         // === UTILITY FUNCTIONS ===
         function showScreen(screenId) {
@@ -2508,24 +2436,7 @@
                     });
                 }
             }
-            
-            // Debug shortcuts (solo per admin)
-            if (gameState.isAdmin && e.ctrlKey) {
-                switch(e.key) {
-                    case 't':
-                        e.preventDefault();
-                        testCapturedPieces();
-                        break;
-                    case 's':
-                        e.preventDefault();
-                        simulateCapture();
-                        break;
-                    case 'r':
-                        e.preventDefault();
-                        clearCaptures();
-                        break;
-                }
-            }
+
         });
 
         // Global error handling
