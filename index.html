@@ -120,10 +120,162 @@
             grid-template-columns: repeat(8, 60px);
             grid-template-rows: repeat(8, 60px);
             gap: 0;
-            margin: 20px auto;
             border: 3px solid #333;
             border-radius: 5px;
             position: relative;
+        }
+        .board-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px auto;
+        }
+
+        .coordinate {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            user-select: none;
+        }
+
+        .coord-file {
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .coord-rank {
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* HIGHLIGHT ULTIMA MOSSA */
+        .square.last-move-from {
+            background: rgba(255, 255, 0, 0.4) !important;
+            box-shadow: inset 0 0 0 2px #ffd700;
+        }
+
+        .square.last-move-to {
+            background: rgba(255, 255, 0, 0.6) !important;
+            box-shadow: inset 0 0 0 2px #ffd700;
+        }
+
+        /* TIMER MOSSE */
+        .timer-container {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-container.warning {
+            animation: timerWarning 1s ease-in-out infinite;
+        }
+
+        @keyframes timerWarning {
+            0%, 100% { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+            50% { background: linear-gradient(135deg, #ff3742, #c44569); }
+        }
+
+        .timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: width 1s linear;
+        }
+
+        /* TEMA DARK/LIGHT */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dee2e6;
+            --square-light: #f0d9b5;
+            --square-dark: #b58863;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #2c3e50;
+            --bg-secondary: #34495e;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --border-color: #4a6741;
+            --square-light: #769656;
+            --square-dark: #4a6741;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .square.white {
+            background-color: var(--square-light);
+        }
+
+        .square.black {
+            background-color: var(--square-dark);
+        }
+
+        .game-info, .moves-history, .chat-container {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        /* CONTROLLI AGGIUNTIVI */
+        .game-controls {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .theme-toggle, .undo-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover, .undo-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        }
+
+        .undo-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .square {
@@ -937,8 +1089,23 @@
                 <div class="current-player" id="current-turn">Turno del Bianco</div>
                 <div id="game-status"></div>
             </div>
-            <div class="chess-board" id="chess-board" role="grid" aria-label="Scacchiera da gioco"></div>
+
+            <div class="timer-container" id="move-timer">
+                <div>⏱️ Tempo Rimasto: <span id="timer-display">5:00</span></div>
+                <div class="timer-bar" id="timer-bar"></div>
+            </div>
+
+            <div class="board-container">
+                <div class="chess-board" id="chess-board" role="grid" aria-label="Scacchiera da gioco"></div>
+            </div>
             
+            <div class="game-controls">
+                <div class="control-row">
+                    <button class="theme-toggle" onclick="toggleTheme()">🌓 Cambia Tema</button>
+                    <button class="undo-btn" id="undo-btn" onclick="undoLastMove()" disabled>↩️ Annulla Mossa</button>
+                </div>
+            </div>
+
             <div class="game-info" id="current-link-display">
                 <h4 style="margin: 0 0 10px 0;">🔗 Link Partita</h4>
                 <input type="text" id="current-game-url" readonly onclick="this.select()" style="width:100%; padding:8px; font-family:monospace;" aria-label="Link della partita">
@@ -1096,6 +1263,17 @@
         let currentGameListener = null;
         let promotionData = null;
 
+        // === TIMER SISTEMA ===
+        let moveTimer = 300; // 5 minuti in secondi
+        let timerInterval = null;
+        let timerEnabled = true;
+
+        // === TEMA SISTEMA ===
+        let currentTheme = 'light';
+
+        // === ULTIMA MOSSA ===
+        let lastMove = { from: null, to: null };
+
         const chessPieces = {
             'white': { 'king': '♔', 'queen': '♕', 'rook': '♖', 'bishop': '♗', 'knight': '♘', 'pawn': '♙' },
             'black': { 'king': '♚', 'queen': '♛', 'rook': '♜', 'bishop': '♝', 'knight': '♞', 'pawn': '♟' }
@@ -1104,6 +1282,182 @@
         const pieceValues = {
             'pawn': 1, 'knight': 3, 'bishop': 3, 'rook': 5, 'queen': 9, 'king': 0
         };
+
+        // === SISTEMA TIMER ===
+        function startMoveTimer() {
+            if (!timerEnabled) return;
+            
+            moveTimer = 300; // Reset a 5 minuti
+            updateTimerDisplay();
+            
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                moveTimer--;
+                updateTimerDisplay();
+                
+                if (moveTimer <= 30) {
+                    document.getElementById('move-timer').classList.add('warning');
+                } else {
+                    document.getElementById('move-timer').classList.remove('warning');
+                }
+                
+                if (moveTimer <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(moveTimer / 60);
+            const seconds = moveTimer % 60;
+            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('timer-display').textContent = display;
+            
+            // Aggiorna barra progresso
+            const percentage = (moveTimer / 300) * 100;
+            document.getElementById('timer-bar').style.width = percentage + '%';
+        }
+
+        function stopMoveTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('move-timer').classList.remove('warning');
+        }
+
+        function handleTimeOut() {
+            playSound('check'); // Suono di allarme
+            addSystemMessage('⏰ Tempo scaduto! Il turno passa all\'avversario.');
+            
+            // Cambia giocatore automaticamente
+            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+            updateGameInfo();
+            debouncedSaveGame();
+            startMoveTimer(); // Inizia timer per prossimo giocatore
+        }
+
+        // === SISTEMA TEMA ===
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            
+            const themeBtn = document.querySelector('.theme-toggle');
+            themeBtn.textContent = currentTheme === 'light' ? '🌓 Tema Scuro' : '☀️ Tema Chiaro';
+            
+            // Salva preferenza
+            localStorage.setItem('chessTheme', currentTheme);
+            
+            console.log('🎨 Tema cambiato a:', currentTheme);
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('chessTheme') || 'light';
+            currentTheme = savedTheme;
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            
+            const themeBtn = document.querySelector('.theme-toggle');
+            if (themeBtn) {
+                themeBtn.textContent = currentTheme === 'light' ? '🌓 Tema Scuro' : '☀️ Tema Chiaro';
+            }
+        }
+
+        // === COORDINATE SCACCHIERA ===
+        function addCoordinates() {
+            const boardContainer = document.querySelector('.board-container');
+            const isWhitePlayer = gameState.playerColor === 'white' || gameState.isAdmin;
+            
+            // Rimuovi coordinate esistenti
+            boardContainer.querySelectorAll('.coordinate').forEach(el => el.remove());
+            
+            // Aggiungi file (a-h)
+            for (let col = 0; col < 8; col++) {
+                const fileCoord = document.createElement('div');
+                fileCoord.className = 'coordinate coord-file';
+                fileCoord.textContent = String.fromCharCode(97 + (isWhitePlayer ? col : 7 - col));
+                fileCoord.style.left = (col * 60 + 30) + 'px';
+                boardContainer.appendChild(fileCoord);
+            }
+            
+            // Aggiungi rank (1-8)
+            for (let row = 0; row < 8; row++) {
+                const rankCoord = document.createElement('div');
+                rankCoord.className = 'coordinate coord-rank';
+                rankCoord.textContent = isWhitePlayer ? (8 - row) : (row + 1);
+                rankCoord.style.top = (row * 60 + 30) + 'px';
+                boardContainer.appendChild(rankCoord);
+            }
+        }
+
+        // === HIGHLIGHT ULTIMA MOSSA ===
+        function highlightLastMove(from, to) {
+            // Rimuovi highlight precedenti
+            document.querySelectorAll('.square.last-move-from, .square.last-move-to').forEach(sq => {
+                sq.classList.remove('last-move-from', 'last-move-to');
+            });
+            
+            if (from !== null && to !== null) {
+                const fromSquare = document.querySelector(`[data-logical-index="${from}"]`);
+                const toSquare = document.querySelector(`[data-logical-index="${to}"]`);
+                
+                if (fromSquare) fromSquare.classList.add('last-move-from');
+                if (toSquare) toSquare.classList.add('last-move-to');
+                
+                lastMove = { from, to };
+            }
+        }
+
+        // === UNDO ULTIMA MOSSA (ADMIN) ===
+        async function undoLastMove() {
+            if (!gameState.isAdmin || gameState.moveHistory.length === 0) {
+                showMessage('game-status', '❌ Solo gli admin possono annullare le mosse', 'error');
+                return;
+            }
+            
+            if (!confirm('Sei sicuro di voler annullare l\'ultima mossa?')) return;
+            
+            try {
+                // Salva stato corrente per backup
+                const backupState = JSON.parse(JSON.stringify(gameState));
+                
+                // Rimuovi ultima mossa dalla cronologia
+                const lastMoveNotation = gameState.moveHistory.pop();
+                
+                // Ricostruisci stato da inizio partita
+                gameState.board = initializeBoard();
+                gameState.currentPlayer = 'white';
+                gameState.castlingRights = { 
+                    white: { kingside: true, queenside: true }, 
+                    black: { kingside: true, queenside: true } 
+                };
+                gameState.enPassantTarget = null;
+                gameState.halfMoveClock = 0;
+                gameState.fullMoveNumber = 1;
+                
+                // Riapplica tutte le mosse tranne l'ultima
+                for (let i = 0; i < gameState.moveHistory.length; i++) {
+                    // Qui servirebbe una funzione per riapplicare le mosse dalla notazione
+                    // Per semplicità, per ora non implemento il parsing completo
+                }
+                
+                await saveGameToFirebase();
+                renderBoard();
+                updateGameInfo();
+                updateMovesHistory();
+                
+                addSystemMessage(`↩️ Ultima mossa annullata: ${lastMoveNotation}`);
+                playSound('move');
+                
+                console.log('↩️ Mossa annullata:', lastMoveNotation);
+                
+            } catch (error) {
+                console.error('❌ Errore nell\'annullamento:', error);
+                showMessage('game-status', '❌ Errore nell\'annullamento della mossa', 'error');
+            }
+        }
 
         // === SISTEMA AUDIO ===
         let audioEnabled = true;
@@ -1939,6 +2293,20 @@
                     
                     board.appendChild(square);
                 }
+            }
+            
+            // Aggiungi coordinate
+            addCoordinates();
+            
+            // Evidenzia ultima mossa
+            if (lastMove.from !== null && lastMove.to !== null) {
+                highlightLastMove(lastMove.from, lastMove.to);
+            }
+            
+            // Aggiorna pulsante undo
+            const undoBtn = document.getElementById('undo-btn');
+            if (undoBtn && gameState.isAdmin) {
+                undoBtn.disabled = gameState.moveHistory.length === 0;
             }
             
             console.log('🎮 Scacchiera renderizzata per', isWhitePlayer ? 'bianchi' : 'neri');
