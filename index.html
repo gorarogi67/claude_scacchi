@@ -1059,6 +1059,7 @@
         <button class="test-btn" onclick="testCapturedPieces()">Test Catture</button>
         <button class="test-btn" onclick="simulateCapture()">Simula Cattura</button>
         <button class="test-btn" onclick="clearCaptures()">Reset Catture</button>
+        <button class="test-btn" onclick="debugCheckLogic()">Debug Scacco</button>
     </div>
 
     <script>
@@ -1453,6 +1454,77 @@
             showMessage('game-status', '🧹 Catture resettate!', 'success');
         }
 
+        // NUOVA FUNZIONE: Debug logica di scacco
+        function debugCheckLogic() {
+            console.log('🔍 DEBUG LOGICA SCACCO:');
+            console.log('- Giocatore corrente:', gameState.currentPlayer);
+            console.log('- Pezzo selezionato:', gameState.selectedSquare ? indexToAlgebraic(gameState.selectedSquare) : 'nessuno');
+            
+            // Verifica se il re corrente è sotto scacco
+            const currentPlayerInCheck = isKingInCheck(gameState.currentPlayer, gameState.board);
+            console.log(`- Re ${gameState.currentPlayer} sotto scacco:`, currentPlayerInCheck);
+            
+            if (currentPlayerInCheck) {
+                console.log('⚔️ ANALISI SCACCO:');
+                debugAttacksOnKing(gameState.currentPlayer, gameState.board);
+                
+                // Trova mosse che possono risolvere lo scacco
+                console.log('🔧 MOSSE POSSIBILI PER RISOLVERE LO SCACCO:');
+                const possibleMoves = [];
+                
+                for (let from = 0; from < 64; from++) {
+                    const piece = gameState.board[from];
+                    if (piece && piece[0] === gameState.currentPlayer) {
+                        for (let to = 0; to < 64; to++) {
+                            if (isValidMove(from, to)) {
+                                possibleMoves.push({
+                                    from: indexToAlgebraic(from),
+                                    to: indexToAlgebraic(to),
+                                    piece: piece[1],
+                                    captures: gameState.board[to] ? gameState.board[to][1] : null
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                if (possibleMoves.length === 0) {
+                    console.log('❌ SCACCO MATTO! Nessuna mossa valida trovata');
+                } else {
+                    console.log(`✅ ${possibleMoves.length} mosse valide trovate:`);
+                    possibleMoves.forEach(move => {
+                        const captureText = move.captures ? ` (cattura ${move.captures})` : '';
+                        console.log(`  - ${move.piece}: ${move.from} → ${move.to}${captureText}`);
+                    });
+                }
+            }
+            
+            // Test specifico per il pezzo selezionato
+            if (gameState.selectedSquare !== null) {
+                console.log('🎯 ANALISI PEZZO SELEZIONATO:');
+                const selectedPiece = gameState.board[gameState.selectedSquare];
+                console.log(`- Pezzo: ${selectedPiece[1]} ${selectedPiece[0]} in ${indexToAlgebraic(gameState.selectedSquare)}`);
+                
+                const validMoves = [];
+                for (let to = 0; to < 64; to++) {
+                    if (isValidMove(gameState.selectedSquare, to)) {
+                        validMoves.push({
+                            to: indexToAlgebraic(to),
+                            captures: gameState.board[to] ? gameState.board[to][1] : null
+                        });
+                    }
+                }
+                
+                console.log(`- Mosse valide: ${validMoves.length}`);
+                validMoves.forEach(move => {
+                    const captureText = move.captures ? ` (cattura ${move.captures})` : '';
+                    console.log(`  → ${move.to}${captureText}`);
+                });
+            }
+            
+            alert('Debug completato! Controlla la console per tutti i dettagli.');
+        }
+
         // === UTILITY FUNCTIONS ===
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
@@ -1820,53 +1892,101 @@
         }
 
         function isValidMove(from, to) {
-            if (from === to) return false;
-            if (from < 0 || from > 63 || to < 0 || to > 63) return false;
+            console.log(`🔍 Validando mossa da ${indexToAlgebraic(from)} a ${indexToAlgebraic(to)}`);
             
-            const piece = gameState.board[from];
-            if (!piece || piece[0] !== gameState.currentPlayer) return false;
-            
-            const targetPiece = gameState.board[to];
-            if (targetPiece && targetPiece[0] === gameState.currentPlayer) return false;
-            
-            const tempBoard = JSON.parse(JSON.stringify(gameState.board));
-            tempBoard[to] = tempBoard[from];
-            tempBoard[from] = null;
-            
-            if (piece[1] === 'pawn' && to === gameState.enPassantTarget) {
-                const capturedPawnIndex = to + (piece[0] === 'white' ? 8 : -8);
-                tempBoard[capturedPawnIndex] = null;
+            if (from === to) {
+                console.log('❌ Stessa casella');
+                return false;
+            }
+            if (from < 0 || from > 63 || to < 0 || to > 63) {
+                console.log('❌ Indici fuori range');
+                return false;
             }
             
-            if (isKingInCheck(gameState.currentPlayer, tempBoard)) return false;
+            const piece = gameState.board[from];
+            if (!piece || piece[0] !== gameState.currentPlayer) {
+                console.log('❌ Pezzo non valido o non del giocatore corrente');
+                return false;
+            }
+            
+            const targetPiece = gameState.board[to];
+            if (targetPiece && targetPiece[0] === gameState.currentPlayer) {
+                console.log('❌ Casella occupata da pezzo proprio');
+                return false;
+            }
 
             const [color, pieceType] = piece;
             const fromRow = Math.floor(from / 8), fromCol = from % 8;
             const toRow = Math.floor(to / 8), toCol = to % 8;
             const rowDiff = toRow - fromRow, colDiff = toCol - fromCol;
 
+            // PRIMA: Verifica se la mossa è legale secondo le regole del pezzo
+            let isLegalPieceMove = false;
+            
             switch (pieceType) {
                 case 'pawn':
-                    return isValidPawnMove(from, to, color, fromRow, toRow, colDiff, targetPiece);
+                    isLegalPieceMove = isValidPawnMove(from, to, color, fromRow, toRow, colDiff, targetPiece);
+                    break;
                 case 'rook':
-                    return (rowDiff === 0 || colDiff === 0) && isPathClear(from, to);
+                    isLegalPieceMove = (rowDiff === 0 || colDiff === 0) && isPathClear(from, to);
+                    break;
                 case 'bishop':
-                    return Math.abs(rowDiff) === Math.abs(colDiff) && isPathClear(from, to);
+                    isLegalPieceMove = Math.abs(rowDiff) === Math.abs(colDiff) && isPathClear(from, to);
+                    break;
                 case 'queen':
-                    return (rowDiff === 0 || colDiff === 0 || Math.abs(rowDiff) === Math.abs(colDiff)) && isPathClear(from, to);
+                    isLegalPieceMove = (rowDiff === 0 || colDiff === 0 || Math.abs(rowDiff) === Math.abs(colDiff)) && isPathClear(from, to);
+                    break;
                 case 'knight':
-                    return (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) || 
+                    isLegalPieceMove = (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) || 
                            (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2);
+                    break;
                 case 'king':
                     if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) {
-                        return true;
+                        isLegalPieceMove = true;
+                    } else if (rowDiff === 0 && Math.abs(colDiff) === 2) {
+                        isLegalPieceMove = canCastle(color, colDiff > 0);
                     }
-                    if (rowDiff === 0 && Math.abs(colDiff) === 2) {
-                        return canCastle(color, colDiff > 0);
-                    }
-                    return false;
+                    break;
             }
-            return false;
+            
+            if (!isLegalPieceMove) {
+                console.log(`❌ Mossa non legale per ${pieceType}`);
+                return false;
+            }
+            
+            console.log(`✅ Mossa legale per ${pieceType}`);
+            
+            // DOPO: Simula la mossa e verifica se lascia il re sotto scacco
+            const tempBoard = JSON.parse(JSON.stringify(gameState.board));
+            
+            // Esegui la mossa sulla board temporanea
+            tempBoard[to] = tempBoard[from];  // Muovi il pezzo (e rimuovi automaticamente eventuale pezzo catturato)
+            tempBoard[from] = null;            // Svuota la casella di partenza
+            
+            // Gestione en passant nella simulazione
+            if (piece[1] === 'pawn' && to === gameState.enPassantTarget) {
+                const capturedPawnIndex = to + (piece[0] === 'white' ? 8 : -8);
+                tempBoard[capturedPawnIndex] = null;
+                console.log('🎯 Simulazione en passant');
+            }
+            
+            // Verifica se dopo questa mossa il nostro re è ancora/diventa sotto scacco
+            const kingStillInCheck = isKingInCheck(gameState.currentPlayer, tempBoard);
+            
+            if (kingStillInCheck) {
+                console.log(`❌ Mossa lascerebbe/mantiene il re ${gameState.currentPlayer} sotto scacco`);
+                
+                // Debug: Mostra posizione del re e chi lo attacca
+                const kingPos = findKingPosition(gameState.currentPlayer, tempBoard);
+                console.log(`👑 Re ${gameState.currentPlayer} in posizione ${indexToAlgebraic(kingPos)}`);
+                console.log('⚔️ Atacchi al re dopo la mossa simulata:');
+                debugAttacksOnKing(gameState.currentPlayer, tempBoard);
+                
+                return false;
+            }
+            
+            console.log(`✅ Mossa valida: non lascia il re sotto scacco`);
+            return true;
         }
 
         function isValidPawnMove(from, to, color, fromRow, toRow, colDiff, targetPiece) {
@@ -1928,22 +2048,64 @@
         }
 
         function isKingInCheck(color, board) {
-            let kingPos = -1;
-            for (let i = 0; i < 64; i++) {
-                if (board[i] && board[i][0] === color && board[i][1] === 'king') {
-                    kingPos = i;
-                    break;
-                }
+            const kingPos = findKingPosition(color, board);
+            if (kingPos === -1) {
+                console.warn(`⚠️ Re ${color} non trovato sulla scacchiera!`);
+                return false;
             }
-            if (kingPos === -1) return false;
 
             const opponentColor = color === 'white' ? 'black' : 'white';
             for (let i = 0; i < 64; i++) {
                 if (board[i] && board[i][0] === opponentColor) {
-                    if (canPieceAttack(i, kingPos, board)) return true;
+                    if (canPieceAttack(i, kingPos, board)) {
+                        console.log(`⚔️ Re ${color} sotto scacco da ${board[i][1]} in ${indexToAlgebraic(i)}`);
+                        return true;
+                    }
                 }
             }
             return false;
+        }
+
+        // Funzione helper per trovare la posizione del re
+        function findKingPosition(color, board) {
+            for (let i = 0; i < 64; i++) {
+                if (board[i] && board[i][0] === color && board[i][1] === 'king') {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        // Funzione di debug per vedere chi attacca il re
+        function debugAttacksOnKing(color, board) {
+            const kingPos = findKingPosition(color, board);
+            if (kingPos === -1) return;
+            
+            const opponentColor = color === 'white' ? 'black' : 'white';
+            const attackers = [];
+            
+            for (let i = 0; i < 64; i++) {
+                if (board[i] && board[i][0] === opponentColor) {
+                    if (canPieceAttack(i, kingPos, board)) {
+                        attackers.push({
+                            piece: board[i][1],
+                            position: indexToAlgebraic(i),
+                            index: i
+                        });
+                    }
+                }
+            }
+            
+            if (attackers.length > 0) {
+                console.log('🎯 Pezzi che danno scacco al re:');
+                attackers.forEach(attacker => {
+                    console.log(`  - ${attacker.piece} in ${attacker.position}`);
+                });
+            } else {
+                console.log('✅ Nessun pezzo dà scacco al re');
+            }
+            
+            return attackers;
         }
 
         function canPieceAttack(from, to, board) {
@@ -2517,6 +2679,10 @@
                     case 'r':
                         e.preventDefault();
                         clearCaptures();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        debugCheckLogic();
                         break;
                 }
             }
