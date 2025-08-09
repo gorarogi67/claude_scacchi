@@ -25,7 +25,7 @@
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            max-width: 900px;
+            max-width: 1400px;
             width: 95%;
             margin: 20px;
         }
@@ -115,6 +115,145 @@
             background: #28a745;
         }
 
+        .game-layout {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 30px;
+            margin: 20px auto;
+            flex-wrap: wrap;
+        }
+
+        .board-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .captured-pieces-panel {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 280px;
+            max-width: 320px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .captured-pieces-panel h4 {
+            margin: 0 0 20px 0;
+            text-align: center;
+            color: var(--text-primary);
+            font-size: 18px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .captured-section {
+            margin-bottom: 25px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .captured-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .captured-player-name {
+            font-weight: bold;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .material-advantage {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #e8f5e8, #d4edda);
+            color: #155724;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .material-advantage.negative {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+        }
+
+        .material-advantage.neutral {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #6c757d;
+        }
+
+        .captured-pieces {
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: flex-start;
+            align-content: flex-start;
+        }
+
+        .captured-piece {
+            position: relative;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: help;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .captured-piece:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .captured-piece .piece-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .no-captures {
+            width: 100%;
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 14px;
+            padding: 20px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.02);
+        }
+
         .chess-board {
             display: grid;
             grid-template-columns: repeat(8, 60px);
@@ -123,11 +262,6 @@
             border: 3px solid #333;
             border-radius: 5px;
             position: relative;
-        }
-        .board-container {
-            position: relative;
-            display: inline-block;
-            margin: 20px auto;
         }
 
         .coordinate {
@@ -579,6 +713,31 @@
             border: 1px solid #bee5eb;
         }
 
+        /* Responsive design per pannello catture */
+        @media (max-width: 1200px) {
+            .game-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .captured-pieces-panel {
+                order: -1;
+                max-width: 500px;
+                width: 100%;
+            }
+            
+            .captured-section {
+                display: inline-block;
+                width: calc(50% - 10px);
+                vertical-align: top;
+                margin-right: 10px;
+            }
+            
+            .captured-section:last-child {
+                margin-right: 0;
+            }
+        }
+
         @media (max-width: 600px) {
             .chess-board { 
                 grid-template-columns: repeat(8, 45px); 
@@ -595,6 +754,29 @@
             }
             h1 {
                 font-size: 2em;
+            }
+            
+            .game-layout {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .captured-pieces-panel {
+                min-width: auto;
+                width: 100%;
+                padding: 15px;
+            }
+            
+            .captured-section {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            
+            .captured-piece {
+                width: 30px;
+                height: 30px;
+                font-size: 24px;
             }
         }
 
@@ -1095,8 +1277,34 @@
                 <div class="timer-bar" id="timer-bar"></div>
             </div>
 
-            <div class="board-container">
-                <div class="chess-board" id="chess-board" role="grid" aria-label="Scacchiera da gioco"></div>
+            <div class="game-layout">
+                <div class="board-container">
+                    <div class="chess-board" id="chess-board" role="grid" aria-label="Scacchiera da gioco"></div>
+                </div>
+                
+                <div class="captured-pieces-panel">
+                    <h4>📦 Pezzi Catturati</h4>
+                    
+                    <div class="captured-section">
+                        <div class="captured-header">
+                            <span class="captured-player-name" id="captured-white-name">Bianchi</span>
+                            <span class="material-advantage" id="white-material">+0</span>
+                        </div>
+                        <div class="captured-pieces white-captured" id="white-captured-pieces">
+                            <div class="no-captures">Nessun pezzo catturato</div>
+                        </div>
+                    </div>
+                    
+                    <div class="captured-section">
+                        <div class="captured-header">
+                            <span class="captured-player-name" id="captured-black-name">Neri</span>
+                            <span class="material-advantage" id="black-material">+0</span>
+                        </div>
+                        <div class="captured-pieces black-captured" id="black-captured-pieces">
+                            <div class="no-captures">Nessun pezzo catturato</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="game-controls">
@@ -1700,6 +1908,133 @@
             displayChatMessages();
         }
 
+        // === CAPTURED PIECES MANAGEMENT ===
+        function updateCapturedPieces() {
+            // Assicura che capturedPieces esista
+            if (!gameState.capturedPieces) {
+                gameState.capturedPieces = { white: [], black: [] };
+            }
+            
+            // Aggiorna nomi giocatori
+            document.getElementById('captured-white-name').textContent = gameState.players.white;
+            document.getElementById('captured-black-name').textContent = gameState.players.black;
+            
+            // Aggiorna visualizzazione per entrambi i colori
+            updateCapturedPiecesForColor('white');
+            updateCapturedPiecesForColor('black');
+            
+            // Calcola e mostra vantaggio materiale
+            updateMaterialAdvantage();
+        }
+
+        function updateCapturedPiecesForColor(color) {
+            const container = document.getElementById(`${color}-captured-pieces`);
+            const capturedList = gameState.capturedPieces[color] || [];
+            
+            container.innerHTML = '';
+            
+            if (capturedList.length === 0) {
+                container.innerHTML = '<div class="no-captures">Nessun pezzo catturato</div>';
+                return;
+            }
+            
+            // Raggruppa pezzi per tipo
+            const pieceGroups = {};
+            capturedList.forEach(piece => {
+                const pieceType = piece[1];
+                if (!pieceGroups[pieceType]) {
+                    pieceGroups[pieceType] = [];
+                }
+                pieceGroups[pieceType].push(piece);
+            });
+            
+            // Ordina per valore (dal più prezioso al meno prezioso)
+            const sortedTypes = Object.keys(pieceGroups).sort((a, b) => pieceValues[b] - pieceValues[a]);
+            
+            sortedTypes.forEach(pieceType => {
+                const pieces = pieceGroups[pieceType];
+                const count = pieces.length;
+                const pieceElement = document.createElement('div');
+                pieceElement.className = 'captured-piece';
+                
+                // Usa il simbolo del pezzo
+                const pieceSymbol = chessPieces[color][pieceType];
+                pieceElement.innerHTML = `
+                    <span class="piece-${color}">${pieceSymbol}</span>
+                    ${count > 1 ? `<div class="piece-count">${count}</div>` : ''}
+                `;
+                
+                // Tooltip con informazioni
+                const pieceName = {
+                    'pawn': 'Pedone',
+                    'rook': 'Torre', 
+                    'knight': 'Cavallo',
+                    'bishop': 'Alfiere',
+                    'queen': 'Regina',
+                    'king': 'Re'
+                }[pieceType];
+                
+                pieceElement.title = `${pieceName} ${count > 1 ? `(${count})` : ''} - Valore: ${pieceValues[pieceType] * count}`;
+                
+                container.appendChild(pieceElement);
+            });
+        }
+
+        function updateMaterialAdvantage() {
+            const whiteValue = calculateMaterialValue('white');
+            const blackValue = calculateMaterialValue('black');
+            const advantage = whiteValue - blackValue;
+            
+            const whiteElement = document.getElementById('white-material');
+            const blackElement = document.getElementById('black-material');
+            
+            // Reset classes
+            [whiteElement, blackElement].forEach(el => {
+                el.classList.remove('negative', 'neutral', 'positive');
+            });
+            
+            if (advantage > 0) {
+                // Bianchi in vantaggio
+                whiteElement.textContent = `+${advantage}`;
+                whiteElement.classList.add('positive');
+                blackElement.textContent = '0';
+                blackElement.classList.add('neutral');
+            } else if (advantage < 0) {
+                // Neri in vantaggio
+                blackElement.textContent = `+${Math.abs(advantage)}`;
+                blackElement.classList.add('positive');
+                whiteElement.textContent = '0';
+                whiteElement.classList.add('neutral');
+            } else {
+                // Pareggio
+                whiteElement.textContent = '0';
+                blackElement.textContent = '0';
+                whiteElement.classList.add('neutral');
+                blackElement.classList.add('neutral');
+            }
+        }
+
+        function calculateMaterialValue(color) {
+            if (!gameState.capturedPieces || !gameState.capturedPieces[color]) {
+                return 0;
+            }
+            
+            return gameState.capturedPieces[color].reduce((total, piece) => {
+                return total + (pieceValues[piece[1]] || 0);
+            }, 0);
+        }
+
+        function addCapturedPiece(piece) {
+            if (!gameState.capturedPieces) {
+                gameState.capturedPieces = { white: [], black: [] };
+            }
+            
+            const [color, pieceType] = piece;
+            gameState.capturedPieces[color].push(piece);
+            
+            console.log(`📦 Pezzo catturato: ${color} ${pieceType}`);
+        }
+
         // === UTILITY FUNCTIONS ===
         function debounce(func, wait) {
             let timeout;
@@ -1768,6 +2103,7 @@
                 selectedSquare: null,
                 moveHistory: [],
                 messages: [], // Chat messages
+                capturedPieces: { white: [], black: [] }, // Pezzi catturati per colore
                 players: { white: 'Giocatore Bianco', black: 'Giocatore Nero' },
                 gameId: null,
                 isAdmin: false,
@@ -1878,13 +2214,15 @@
                         gameState.playerColor = localPlayerColor;
                         gameState.adminOverrideMode = localAdminOverride;
                         
-                        // Assicura che messages esista
+                        // Assicura che messages e capturedPieces esistano
                         if (!gameState.messages) gameState.messages = [];
+                        if (!gameState.capturedPieces) gameState.capturedPieces = { white: [], black: [] };
                         
                         if (document.getElementById('game-screen').classList.contains('active')) {
                             renderBoard();
                             updateGameInfo();
                             updateMovesHistory();
+                            updateCapturedPieces();
                             displayChatMessages();
                             
                             // Notifica cambio turno
@@ -2028,6 +2366,7 @@
                 gameState.players.black = blackName || 'Giocatore Nero';
                 gameState.board = initializeBoard();
                 gameState.gameActive = true;
+                gameState.capturedPieces = { white: [], black: [] }; // Inizializza pezzi catturati
                 
                 // Inizializza chat con messaggio di sistema
                 gameState.messages = [{
@@ -2131,8 +2470,9 @@
             // Inizializza sistemi audio e chat
             initAudioSystem();
             
-            // Assicura che messages esista
+            // Assicura che messages e capturedPieces esistano
             if (!gameState.messages) gameState.messages = [];
+            if (!gameState.capturedPieces) gameState.capturedPieces = { white: [], black: [] };
             
             // Reset contatori chat
             chatVisible = true;
@@ -2148,6 +2488,7 @@
             renderBoard();
             updateGameInfo();
             updateMovesHistory();
+            updateCapturedPieces();
             displayChatMessages();
         }
 
@@ -2698,6 +3039,9 @@
             let systemMessage = null;
             
             if (capturedPiece) {
+                // Traccia pezzo catturato
+                addCapturedPiece(capturedPiece);
+                
                 soundType = 'capture';
                 const capturerName = gameState.players[color];
                 const capturedPieceName = capturedPiece[1] === 'pawn' ? 'pedone' : 
@@ -2729,6 +3073,13 @@
                     // Cattura en passant
                     console.log('⚔️ Cattura en passant');
                     const capturedPawnIndex = to + (color === 'white' ? 8 : -8);
+                    const capturedPawn = gameState.board[capturedPawnIndex];
+                    
+                    // Traccia il pedone catturato en passant
+                    if (capturedPawn) {
+                        addCapturedPiece(capturedPawn);
+                    }
+                    
                     gameState.board[capturedPawnIndex] = null;
                     
                     const playerName = gameState.players[color];
@@ -2944,6 +3295,7 @@
             renderBoard();
             updateGameInfo();
             updateMovesHistory();
+            updateCapturedPieces();
             
             // Controlla fine partita con suoni e messaggi
             if (hasCheckmate) {
@@ -3230,6 +3582,29 @@
             
             addSystemMessage('🧪 Test messaggio di sistema');
             console.log('💬 Messaggio di test aggiunto');
+        };
+
+        // Test pezzi catturati
+        window.testCapturedPieces = function() {
+            console.log('📦 TEST PEZZI CATTURATI:');
+            console.log('- Pezzi bianchi catturati:', gameState.capturedPieces?.white || []);
+            console.log('- Pezzi neri catturati:', gameState.capturedPieces?.black || []);
+            console.log('- Valore materiale bianchi:', calculateMaterialValue('white'));
+            console.log('- Valore materiale neri:', calculateMaterialValue('black'));
+            
+            // Test aggiunta pezzi di esempio
+            if (gameState.gameId) {
+                console.log('🧪 Aggiungendo pezzi di test...');
+                addCapturedPiece(['white', 'pawn']);
+                addCapturedPiece(['white', 'knight']);
+                addCapturedPiece(['black', 'bishop']);
+                addCapturedPiece(['black', 'pawn']);
+                addCapturedPiece(['black', 'pawn']);
+                updateCapturedPieces();
+                console.log('✅ Pezzi di test aggiunti');
+            } else {
+                console.log('❌ Nessuna partita attiva per testare i pezzi catturati');
+            }
         };
 
         // Controllo di sicurezza: previene manipolazione manuale del gameState
