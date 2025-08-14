@@ -216,7 +216,51 @@
         <!-- ... altre schermate ... -->
     </div>
 
-    <script>
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyC6imkgB2bRtUv113tDGFWdeNl-fWq_Oc8",
+        authDomain: "scacchi-e4ae1.firebaseapp.com",
+        databaseURL: "https://scacchi-e4ae1-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "scacchi-e4ae1",
+        storageBucket: "scacchi-e4ae1.firebasestorage.app",
+        messagingSenderId: "655013026025",
+        appId: "1:655013026025:web:a97e5bf05c7f2e25ba7878"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    window.firebaseApp = app;
+    window.firebaseDatabase = database;
+    window.firebaseRef = ref;
+    window.firebaseSet = set;
+    window.firebaseGet = get;
+    window.firebaseOnValue = onValue;
+    window.firebaseOff = off;
+
+    // Connection monitoring
+    const testRef = ref(database, '.info/connected');
+    onValue(testRef, (snapshot) => {
+        const connected = snapshot.val();
+        const statusEl = document.getElementById('firebase-status');
+        if (statusEl) {
+            if (connected) {
+                statusEl.textContent = '🟢 Firebase Online';
+                statusEl.className = 'connection-status connection-online';
+            } else {
+                statusEl.textContent = '🔴 Firebase Offline';
+                statusEl.className = 'connection-status connection-offline';
+            }
+        }
+        console.log('Firebase Status:', connected ? 'Connected' : 'Disconnected');
+    });
+    
+    console.log('🔥 Firebase inizializzato con successo!');
+</script>
+<script>
         // === CONFIGURAZIONE E COSTANTI ===
         const ADMIN_PASSWORD = 'chess123';
         
