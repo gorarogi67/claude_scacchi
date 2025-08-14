@@ -5,81 +5,200 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chess Host</title>
     <style>
-        /* --- Reset e Variabili --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg-primary: #f8f9fa;
-            --bg-secondary: #ffffff;
-            --text-primary: #333333;
-            --border-color: #dddddd;
-            --square-light: #f0d9b5;
-            --square-dark:  #b58863;
+        /* --- Reset e Variabili Globali --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        [data-theme="dark"] {
-            --bg-primary: #2e2e2e;
-            --bg-secondary: #3c3c3c;
-            --text-primary: #e0e0e0;
-            --border-color: #555555;
-            --square-light: #b58863;
-            --square-dark:  #f0d9b5;
-        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        /* --- Stili Bottoni e Form --- */
-        .btn { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; }
-        input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
 
-        /* --- Layout Principale --- */
-        .container { max-width: 1200px; margin: auto; padding: 20px; background: var(--bg-primary); border-radius: 8px; }
-        .screen { display: none; }
-        .screen.active { display: block; }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            max-width: 900px;
+            width: 95%;
+            margin: 20px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="password"], input[type="email"], input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            margin: 5px;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
 
         /* --- Scacchiera --- */
-        .board-container { display: flex; align-items: flex-start; }
         .chess-board {
             display: grid;
             grid-template-columns: repeat(8, 60px);
             grid-template-rows: repeat(8, 60px);
             gap: 0;
             border: 3px solid #333;
+            border-radius: 5px;
+            position: relative;
         }
-        .square { width: 60px; height: 60px; position: relative; }
-        .square.white { background-color: var(--square-light); }
-        .square.black { background-color: var(--square-dark); }
-        .square.selected { background-color: #7fb800 !important; animation: selectedPulse 2s infinite; }
-        .square.possible-move::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #7fb800, #9fd80d); opacity: 0.9; animation: possibleMovePulse 1.5s infinite; }
-        @keyframes selectedPulse { 0%,100% { box-shadow: inset 0 0 0 3px #5a8a00; } 50% { box-shadow: inset 0 0 0 3px #7fb800; } }
-        @keyframes possibleMovePulse { 0%,100% { opacity: 0.9; } 50% { opacity: 0.6; } }
+        .board-container { position: relative; display: flex; align-items: flex-start; }
 
         /* --- Pezzi Catturati --- */
+        /* --- Pezzi Catturati --- */
+        .board-container { position: relative; display: flex; align-items: flex-start; }
         #captured-pieces { margin-left: 20px; display: flex; flex-direction: column; gap: 20px; }
         .captured-group h4 { margin: 0 0 5px; font-size: 0.9rem; text-align: center; }
         .captured-list { display: flex; flex-wrap: wrap; gap: 4px; min-height: 40px; border: 1px solid var(--border-color); padding: 5px; border-radius: 4px; background: var(--bg-secondary); }
         .captured-list img { width: 30px; height: 30px; object-fit: contain; }
 
-        /* --- Altri Stili (timer, cronologia mosse, chat, ecc.) --- */
-        /* (qui tutto il CSS esistente rimane invariato) */
+        .coordinate {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            user-select: none;
+        }
+
+        .coord-file {
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .coord-rank {
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        /* ... resto del CSS esistente ... */
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Schermate varie (login, pannello, errore, caricamento, promozione) rimangono identiche -->
+        <div id="admin-login" class="screen active">
+            <h1>🏰 Chess Host</h1>
+            <h2>Accesso Amministratore</h2>
+            <div class="firebase-info">
+                <strong>🚀 Versione Firebase!</strong><br>
+                Partite Multiple • Sincronizzazione Real-Time • Cross-Device
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Password Amministratore:</label>
+                <input type="password" id="admin-password" placeholder="Inserisci la password" autocomplete="current-password">
+            </div>
+            <button class="btn" onclick="adminLogin()">Accedi</button>
+            <div id="login-message"></div>
+            <div class="connection-status" id="firebase-status">🔗 Connessione Firebase...</div>
+        </div>
 
-        <!-- Schermata di gioco -->
+        <div id="admin-panel" class="screen">
+            <!-- ... contenuto pannello amministratore ... -->
+        </div>
+
         <div id="game-screen" class="screen">
-            <!-- Nomi giocatori e controlli -->
+            <h1>♔ Chess Host</h1>
             <div class="player-names">
-                <span id="white-name">Giocatore Bianco</span> vs <span id="black-name">Giocatore Nero</span>
+                <span class="white-player" id="white-name">Giocatore Bianco</span>
+                <span class="black-player" id="black-name">Giocatore Nero</span>
+            </div>
+            <div class="game-info">
+                <div class="current-player" id="current-turn">Turno del Bianco</div>
+                <div id="game-status"></div>
             </div>
 
-            <!-- Contenitore Scacchiera con Pezzi Catturati -->
-            <div class="board-container" id="board-container">
+            <div class="timer-container" id="move-timer">
+                <div>⏱️ Tempo Rimasto: <span id="timer-display">5:00</span></div>
+                <div class="timer-bar" id="timer-bar"></div>
+            </div>
+
+            <div class="board-container">
                 <div class="chess-board" id="chess-board" role="grid" aria-label="Scacchiera da gioco"></div>
+                <!-- Contenitore per pezzi catturati -->
                 <div id="captured-pieces">
                     <div class="captured-group">
                         <h4>Pezzi neri catturati</h4>
@@ -91,42 +210,46 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Controlli di gioco, timer, cronologia mosse, chat, ecc. rimangono identici -->
+            <!-- ... resto dell'HTML di gioco ... -->
         </div>
 
-        <!-- Altre schermate rimangono identiche -->
+        <!-- ... altre schermate ... -->
     </div>
 
     <script>
-        // (Script Firebase, utility e logica precedenti rimangono invariati)
-
-        // Inizializzazione dello stato di gioco
+        // === CONFIGURAZIONE E COSTANTI ===
+        const ADMIN_PASSWORD = 'chess123';
+        
         let gameState = {};
         gameState.capturedBlack = [];
         gameState.capturedWhite = [];
         let currentGameListener = null;
         let promotionData = null;
+
         // ... resto delle variabili e funzioni preesistenti ...
 
-        // Funzione per aggiornare e mostrare i pezzi catturati
+        // Funzione per renderizzare i pezzi catturati
         function renderCapturedPieces() {
             const blackDiv = document.getElementById('captured-black');
-            blackDiv.innerHTML = '';
-            gameState.capturedBlack.forEach(type => {
-                const img = document.createElement('img');
-                img.src = `assets/pieces/black_${type}.png`;
-                img.alt = type;
-                blackDiv.appendChild(img);
-            });
+            if (blackDiv) {
+                blackDiv.innerHTML = '';
+                gameState.capturedBlack.forEach(type => {
+                    const img = document.createElement('img');
+                    img.src = `assets/pieces/black_${type}.png`;
+                    img.alt = type;
+                    blackDiv.appendChild(img);
+                });
+            }
             const whiteDiv = document.getElementById('captured-white');
-            whiteDiv.innerHTML = '';
-            gameState.capturedWhite.forEach(type => {
-                const img = document.createElement('img');
-                img.src = `assets/pieces/white_${type}.png`;
-                img.alt = type;
-                whiteDiv.appendChild(img);
-            });
+            if (whiteDiv) {
+                whiteDiv.innerHTML = '';
+                gameState.capturedWhite.forEach(type => {
+                    const img = document.createElement('img');
+                    img.src = `assets/pieces/white_${type}.png`;
+                    img.alt = type;
+                    whiteDiv.appendChild(img);
+                });
+            }
         }
 
         // Override di renderBoard per includere i pezzi catturati
@@ -137,6 +260,8 @@
                 renderCapturedPieces();
             };
         })();
+
+        // ... resto dello script esistente ...
     </script>
 </body>
 </html>
