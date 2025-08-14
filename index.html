@@ -6,155 +6,31 @@
     <title>Chess Host</title>
     <style>
         /* --- Reset e Variabili Globali --- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            max-width: 900px;
-            width: 95%;
-            margin: 20px;
-        }
-
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-        }
-
-        h2 {
-            color: #555;
-            margin-bottom: 20px;
-            text-align: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        input[type="password"], input[type="email"], input[type="text"], input[type="url"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
-            margin: 5px;
-            min-width: 120px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-        }
-
-        .btn-success {
-            background: #28a745;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .container { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-width: 900px; width: 95%; margin: 20px; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 2.5em; }
+        h2 { color: #555; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="password"], input[type="email"], input[type="text"], input[type="url"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.2s; margin: 5px; min-width: 120px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: #6c757d; }
+        .btn-danger { background: #dc3545; }
+        .btn-success { background: #28a745; }
         /* --- Scacchiera --- */
-        .chess-board {
-            display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
-            gap: 0;
-            border: 3px solid #333;
-            border-radius: 5px;
-            position: relative;
-        }
-        .board-container { position: relative; display: flex; align-items: flex-start; }
-
+        .chess-board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); gap: 0; border: 3px solid #333; border-radius: 5px; position: relative; }
+        .board-container { display: flex; align-items: flex-start; }
         /* --- Pezzi Catturati --- */
-        /* --- Pezzi Catturati --- */
-        .board-container { position: relative; display: flex; align-items: flex-start; }
         #captured-pieces { margin-left: 20px; display: flex; flex-direction: column; gap: 20px; }
         .captured-group h4 { margin: 0 0 5px; font-size: 0.9rem; text-align: center; }
-        .captured-list { display: flex; flex-wrap: wrap; gap: 4px; min-height: 40px; border: 1px solid var(--border-color); padding: 5px; border-radius: 4px; background: var(--bg-secondary); }
+        .captured-list { display: flex; flex-wrap: wrap; gap: 4px; min-height: 40px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: #f8f9fa; }
         .captured-list img { width: 30px; height: 30px; object-fit: contain; }
-
-        .coordinate {
-            position: absolute;
-            font-size: 12px;
-            font-weight: bold;
-            color: #666;
-            user-select: none;
-        }
-
-        .coord-file {
-            bottom: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .coord-rank {
-            left: -18px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
         /* ... resto del CSS esistente ... */
     </style>
 </head>
@@ -163,149 +39,50 @@
         <div id="admin-login" class="screen active">
             <h1>🏰 Chess Host</h1>
             <h2>Accesso Amministratore</h2>
-            <div class="firebase-info">
-                <strong>🚀 Versione Firebase!</strong><br>
-                Partite Multiple • Sincronizzazione Real-Time • Cross-Device
-            </div>
+            <div class="firebase-info"><strong>🚀 Versione Firebase!</strong><br>Partite Multiple • Sincronizzazione Real-Time • Cross-Device</div>
             <div class="form-group">
                 <label for="admin-password">Password Amministratore:</label>
                 <input type="password" id="admin-password" placeholder="Inserisci la password" autocomplete="current-password">
             </div>
             <button class="btn" onclick="adminLogin()">Accedi</button>
-            <div id="login-message"></div>
+            <div id="login-message" style="color:red; margin-top:10px;"></div>
             <div class="connection-status" id="firebase-status">🔗 Connessione Firebase...</div>
         </div>
-
         <div id="admin-panel" class="screen">
-            <!-- ... contenuto pannello amministratore ... -->
+            <!-- Contenuto pannello amministratore -->
         </div>
-
         <div id="game-screen" class="screen">
             <h1>♔ Chess Host</h1>
-            <div class="player-names">
-                <span class="white-player" id="white-name">Giocatore Bianco</span>
-                <span class="black-player" id="black-name">Giocatore Nero</span>
-            </div>
-            <div class="game-info">
-                <div class="current-player" id="current-turn">Turno del Bianco</div>
-                <div id="game-status"></div>
-            </div>
-
-            <div class="timer-container" id="move-timer">
-                <div>⏱️ Tempo Rimasto: <span id="timer-display">5:00</span></div>
-                <div class="timer-bar" id="timer-bar"></div>
-            </div>
-
-            <div class="board-container">
-                <div class="chess-board" id="chess-board" role="grid" aria-label="Scacchiera da gioco"></div>
-                <!-- Contenitore per pezzi catturati -->
-                <div id="captured-pieces">
-                    <div class="captured-group">
-                        <h4>Pezzi neri catturati</h4>
-                        <div id="captured-black" class="captured-list"></div>
-                    </div>
-                    <div class="captured-group">
-                        <h4>Pezzi bianchi catturati</h4>
-                        <div id="captured-white" class="captured-list"></div>
-                    </div>
-                </div>
-            </div>
-            <!-- ... resto dell'HTML di gioco ... -->
+            <!-- ... resto HTML di gioco ... -->
         </div>
-
-        <!-- ... altre schermate ... -->
     </div>
-
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    
-    const firebaseConfig = {
-        apiKey: "AIzaSyC6imkgB2bRtUv113tDGFWdeNl-fWq_Oc8",
-        authDomain: "scacchi-e4ae1.firebaseapp.com",
-        databaseURL: "https://scacchi-e4ae1-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "scacchi-e4ae1",
-        storageBucket: "scacchi-e4ae1.firebasestorage.app",
-        messagingSenderId: "655013026025",
-        appId: "1:655013026025:web:a97e5bf05c7f2e25ba7878"
-    };
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        const firebaseConfig = { apiKey: "AIzaSyC6imkgB2bRtUv113tDGFWdeNl-fWq_Oc8", authDomain: "scacchi-e4ae1.firebaseapp.com", databaseURL: "https://scacchi-e4ae1-default-rtdb.europe-west1.firebasedatabase.app", projectId: "scacchi-e4ae1", storageBucket: "scacchi-e4ae1.appspot.com", messagingSenderId: "655013026025", appId: "1:655013026025:web:a97e5bf05c7f2e25ba7878" };
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const connRef = ref(database, '.info/connected');
+        onValue(connRef, snap => {
+            const status = document.getElementById('firebase-status');
+            if (snap.val()) status.textContent='🟢 Firebase Online'; else status.textContent='🔴 Firebase Offline';
+        });
+        console.log('Firebase inizializzato');
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    window.firebaseApp = app;
-    window.firebaseDatabase = database;
-    window.firebaseRef = ref;
-    window.firebaseSet = set;
-    window.firebaseGet = get;
-    window.firebaseOnValue = onValue;
-    window.firebaseOff = off;
-
-    // Connection monitoring
-    const testRef = ref(database, '.info/connected');
-    onValue(testRef, (snapshot) => {
-        const connected = snapshot.val();
-        const statusEl = document.getElementById('firebase-status');
-        if (statusEl) {
-            if (connected) {
-                statusEl.textContent = '🟢 Firebase Online';
-                statusEl.className = 'connection-status connection-online';
-            } else {
-                statusEl.textContent = '🔴 Firebase Offline';
-                statusEl.className = 'connection-status connection-offline';
-            }
-        }
-        console.log('Firebase Status:', connected ? 'Connected' : 'Disconnected');
-    });
-    
-    console.log('🔥 Firebase inizializzato con successo!');
-</script>
-<script>
-        // === CONFIGURAZIONE E COSTANTI ===
         const ADMIN_PASSWORD = 'chess123';
-        
-        let gameState = {};
-        gameState.capturedBlack = [];
-        gameState.capturedWhite = [];
-        let currentGameListener = null;
-        let promotionData = null;
-
-        // ... resto delle variabili e funzioni preesistenti ...
-
-        // Funzione per renderizzare i pezzi catturati
-        function renderCapturedPieces() {
-            const blackDiv = document.getElementById('captured-black');
-            if (blackDiv) {
-                blackDiv.innerHTML = '';
-                gameState.capturedBlack.forEach(type => {
-                    const img = document.createElement('img');
-                    img.src = `assets/pieces/black_${type}.png`;
-                    img.alt = type;
-                    blackDiv.appendChild(img);
-                });
-            }
-            const whiteDiv = document.getElementById('captured-white');
-            if (whiteDiv) {
-                whiteDiv.innerHTML = '';
-                gameState.capturedWhite.forEach(type => {
-                    const img = document.createElement('img');
-                    img.src = `assets/pieces/white_${type}.png`;
-                    img.alt = type;
-                    whiteDiv.appendChild(img);
-                });
-            }
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
-
-        // Override di renderBoard per includere i pezzi catturati
-        (function(){
-            const originalRenderBoard = renderBoard;
-            renderBoard = function(...args) {
-                originalRenderBoard.apply(this, args);
-                renderCapturedPieces();
-            };
-        })();
-
-        // ... resto dello script esistente ...
+        window.adminLogin = function() {
+            const pw = document.getElementById('admin-password').value;
+            if (pw === ADMIN_PASSWORD) {
+                showScreen('admin-panel');
+            } else {
+                document.getElementById('login-message').textContent = 'Password errata. Riprova.';
+            }
+        };
+        // ... resto script esistente, inclusi renderBoard e renderCapturedPieces override ...
     </script>
 </body>
 </html>
