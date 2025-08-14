@@ -5,33 +5,1030 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chess Host</title>
     <style>
-        /* --- Reset e Variabili Globali --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .container { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-width: 900px; width: 95%; margin: 20px; }
-        .screen { display: none; }
-        .screen.active { display: block; }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 2.5em; }
-        h2 { color: #555; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input[type="password"], input[type="email"], input[type="text"], input[type="url"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
-        input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.2s; margin: 5px; min-width: 120px; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
-        .btn-secondary { background: #6c757d; }
-        .btn-danger { background: #dc3545; }
-        .btn-success { background: #28a745; }
-        /* --- Scacchiera --- */
-        .chess-board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); gap: 0; border: 3px solid #333; border-radius: 5px; position: relative; }
-        .board-container { display: flex; align-items: flex-start; }
-        /* --- Pezzi Catturati --- */
-        #captured-pieces { margin-left: 20px; display: flex; flex-direction: column; gap: 20px; }
-        .captured-group h4 { margin: 0 0 5px; font-size: 0.9rem; text-align: center; }
-        .captured-list { display: flex; flex-wrap: wrap; gap: 4px; min-height: 40px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: #f8f9fa; }
-        .captured-list img { width: 30px; height: 30px; object-fit: contain; }
-        /* ... resto del CSS esistente ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            max-width: 900px;
+            width: 95%;
+            margin: 20px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="password"], input[type="email"], input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            margin: 5px;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            gap: 0;
+            border: 3px solid #333;
+            border-radius: 5px;
+            position: relative;
+        }
+        .board-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px auto;
+        }
+
+        .coordinate {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            user-select: none;
+        }
+
+        .coord-file {
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .coord-rank {
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* HIGHLIGHT ULTIMA MOSSA */
+        .square.last-move-from {
+            background: rgba(255, 255, 0, 0.4) !important;
+            box-shadow: inset 0 0 0 2px #ffd700;
+        }
+
+        .square.last-move-to {
+            background: rgba(255, 255, 0, 0.6) !important;
+            box-shadow: inset 0 0 0 2px #ffd700;
+        }
+
+        /* TIMER MOSSE */
+        .timer-container {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-container.warning {
+            animation: timerWarning 1s ease-in-out infinite;
+        }
+
+        @keyframes timerWarning {
+            0%, 100% { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+            50% { background: linear-gradient(135deg, #ff3742, #c44569); }
+        }
+
+        .timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: width 1s linear;
+        }
+
+        /* TEMA DARK/LIGHT */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dee2e6;
+            --square-light: #f0d9b5;
+            --square-dark: #b58863;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #2c3e50;
+            --bg-secondary: #34495e;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --border-color: #4a6741;
+            --square-light: #769656;
+            --square-dark: #4a6741;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .square.white {
+            background-color: var(--square-light);
+        }
+
+        .square.black {
+            background-color: var(--square-dark);
+        }
+
+        .game-info, .moves-history, .chat-container {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        /* CONTROLLI AGGIUNTIVI */
+        .game-controls {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .theme-toggle, .undo-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover, .undo-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        }
+
+        .undo-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .square:focus {
+            outline: 3px solid #667eea;
+            outline-offset: -3px;
+        }
+
+        .square.white {
+            background-color: #f0d9b5;
+        }
+
+        .square.black {
+            background-color: #b58863;
+        }
+
+        /* PEZZI BIANCHI - Stile distintivo */
+        .piece-white {
+            color: #ffffff;
+            text-shadow: 
+                2px 2px 4px #000000,
+                -1px -1px 2px #333333,
+                1px 1px 0px #666666;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+            transition: all 0.3s ease;
+        }
+
+        .piece-white:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.6));
+        }
+
+        /* PEZZI NERI - Stile distintivo */  
+        .piece-black {
+            color: #1a1a1a;
+            text-shadow: 
+                1px 1px 3px #ffffff,
+                -1px -1px 1px #cccccc,
+                0px 0px 2px #888888;
+            filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.4));
+            transition: all 0.3s ease;
+        }
+
+        .piece-black:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.7));
+        }
+
+        /* ANIMAZIONE MOVIMENTO PEZZO */
+        .piece-moving {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+            font-size: 40px;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: movePiece 0.6s ease-in-out;
+        }
+
+        @keyframes movePiece {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+            25% {
+                transform: scale(1.2) rotate(5deg);
+            }
+            75% {
+                transform: scale(1.1) rotate(-2deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        /* EFFETTI CASELLA */
+        .square.selected {
+            background-color: #7fb800 !important;
+            box-shadow: inset 0 0 0 3px #5a8a00, 0 0 15px rgba(127, 184, 0, 0.5);
+            animation: selectedPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes selectedPulse {
+            0%, 100% { box-shadow: inset 0 0 0 3px #5a8a00, 0 0 15px rgba(127, 184, 0, 0.5); }
+            50% { box-shadow: inset 0 0 0 3px #7fb800, 0 0 25px rgba(127, 184, 0, 0.8); }
+        }
+
+        .square.highlight {
+            background-color: #ffff99 !important;
+        }
+
+        .square.possible-move::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7fb800, #9fd80d);
+            opacity: 0.9;
+            animation: possibleMovePulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(127, 184, 0, 0.5);
+        }
+
+        @keyframes possibleMovePulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            50% { 
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+        }
+
+        .square.possible-capture {
+            background: radial-gradient(circle, #ff4444, #cc0000) !important;
+            box-shadow: inset 0 0 0 3px #ff0000, 0 0 15px rgba(255, 68, 68, 0.8);
+            animation: captureFlame 1.2s ease-in-out infinite alternate;
+        }
+
+        @keyframes captureFlame {
+            0% { 
+                box-shadow: inset 0 0 0 3px #ff0000, 0 0 15px rgba(255, 68, 68, 0.8); 
+                transform: scale(1); 
+            }
+            25% { 
+                box-shadow: inset 0 0 0 3px #ff6600, 0 0 20px rgba(255, 102, 0, 0.9); 
+                transform: scale(1.03); 
+            }
+            75% { 
+                box-shadow: inset 0 0 0 3px #ff3300, 0 0 25px rgba(255, 51, 0, 1); 
+                transform: scale(1.06); 
+            }
+            100% { 
+                box-shadow: inset 0 0 0 3px #ff0000, 0 0 30px rgba(255, 0, 0, 1); 
+                transform: scale(1.02); 
+            }
+        }
+
+        .square.not-playable { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+
+        .square.not-playable:hover { 
+            transform: none; 
+        }
+
+        .square.in-check {
+            background: linear-gradient(45deg, #ff6b6b, #ff8787) !important;
+            animation: checkPulse 1s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.7);
+        }
+
+        @keyframes checkPulse {
+            0%, 100% { 
+                opacity: 1;
+                box-shadow: 0 0 20px rgba(255, 107, 107, 0.7);
+            }
+            50% { 
+                opacity: 0.8;
+                box-shadow: 0 0 30px rgba(255, 107, 107, 0.9);
+            }
+        }
+
+        /* EFFETTI CATTURA */
+        .piece-captured {
+            animation: capturedPiece 0.6s ease-in-out forwards;
+        }
+
+        @keyframes capturedPiece {
+            0% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.3) rotate(180deg);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .game-info {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .current-player { 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #333; 
+            margin-bottom: 10px; 
+        }
+
+        .moves-history { 
+            max-height: 200px; 
+            overflow-y: auto; 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border: 1px solid #dee2e6;
+        }
+
+        .move-item {
+            display: flex;
+            gap: 15px;
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .move-item:hover {
+            background: #e9ecef;
+        }
+
+        .move-number {
+            min-width: 30px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .move-white, .move-black {
+            min-width: 60px;
+            font-family: monospace;
+        }
+
+        .player-names { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 15px; 
+            font-weight: bold; 
+        }
+
+        .white-player { 
+            color: #333; 
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 2px solid transparent;
+        }
+
+        .black-player { 
+            color: #666; 
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 2px solid transparent;
+        }
+
+        .player-names .active-player {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+
+        .status-message { 
+            text-align: center; 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
+            font-weight: 500;
+        }
+
+        .status-success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+
+        .status-error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+
+        .status-warning { 
+            background: #fff3cd; 
+            color: #856404; 
+            border: 1px solid #ffeaa7; 
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 600px) {
+            .chess-board { 
+                grid-template-columns: repeat(8, 45px); 
+                grid-template-rows: repeat(8, 45px); 
+            }
+            .square { 
+                width: 45px; 
+                height: 45px; 
+                font-size: 30px; 
+            }
+            .container { 
+                padding: 15px; 
+                margin: 10px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        .loading { 
+            text-align: center; 
+            padding: 20px; 
+        }
+
+        .spinner { 
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #667eea; 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            animation: spin 1s linear infinite; 
+            margin: 0 auto; 
+        }
+
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+
+        /* Modal Promozione Pedone */
+        .promotion-modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.8); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+        }
+
+        .promotion-modal.active { 
+            display: flex; 
+        }
+
+        .promotion-content { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            text-align: center; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
+            animation: modalAppear 0.3s ease-out; 
+        }
+
+        @keyframes modalAppear { 
+            from { opacity: 0; transform: scale(0.8); } 
+            to { opacity: 1; transform: scale(1); } 
+        }
+
+        .promotion-pieces { 
+            display: flex; 
+            gap: 20px; 
+            margin: 20px 0; 
+            justify-content: center; 
+        }
+
+        .promotion-piece { 
+            width: 80px; 
+            height: 80px; 
+            font-size: 60px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: linear-gradient(145deg, #f0f0f0, #e0e0e0); 
+            border: 3px solid #ddd; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .promotion-piece:hover { 
+            background: linear-gradient(145deg, #e0e0ff, #d0d0ff); 
+            border-color: #667eea; 
+            transform: scale(1.1) rotate(2deg); 
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .promotion-piece:active {
+            transform: scale(1.05);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .promotion-piece::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+            opacity: 0;
+        }
+
+        .promotion-piece:hover::before {
+            animation: shimmer 0.6s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+        }
+        
+        /* Stili per Pannello Admin */
+        #active-games-list { 
+            max-height: 400px; 
+            overflow-y: auto; 
+            margin-top: 20px; 
+            padding-right: 10px; 
+        }
+
+        .game-card { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            border-left: 5px solid #667eea; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            transition: all 0.2s;
+        }
+
+        .game-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .game-card h4 { 
+            margin: 0 0 10px 0; 
+            color: #333; 
+        }
+
+        .game-card p { 
+            margin: 5px 0; 
+            color: #555; 
+        }
+
+        .game-card .actions { 
+            margin-top: 15px; 
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .firebase-info { 
+            background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%); 
+            color: white; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 15px 0; 
+            text-align: center; 
+        }
+
+        .connection-status { 
+            display: inline-block; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            margin: 5px; 
+            transition: all 0.3s;
+        }
+
+        .connection-online { 
+            background: #28a745; 
+            color: white; 
+        }
+
+        .connection-offline { 
+            background: #dc3545; 
+            color: white; 
+        }
+
+        .connection-slow {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .game-result {
+            background: linear-gradient(135deg, #ffd700, #ffed4a);
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .coordinates {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .coord-file {
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .coord-rank {
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* CHAT STYLES */
+        .chat-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .chat-messages {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            min-height: 120px;
+        }
+
+        .chat-message {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            position: relative;
+            animation: messageAppear 0.3s ease-out;
+        }
+
+        @keyframes messageAppear {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-message.white {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1565c0;
+            margin-left: 0;
+            margin-right: 20%;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-message.black {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            color: #6a1b9a;
+            margin-left: 20%;
+            margin-right: 0;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.system {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #e65100;
+            margin: 8px auto;
+            text-align: center;
+            font-style: italic;
+            border-radius: 12px;
+        }
+
+        .chat-timestamp {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .chat-input-container {
+            border-top: 1px solid #dee2e6;
+            padding: 12px;
+            background: #ffffff;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            resize: none;
+            max-height: 60px;
+            min-height: 40px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .chat-send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-toggle {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 10px 0;
+        }
+
+        .chat-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .chat-notification {
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            animation: notificationPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes notificationPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Audio Controls */
+        .audio-controls {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .audio-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .audio-toggle input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Scorrimento fluido per chat */
+        .chat-messages {
+            scroll-behavior: smooth;
+        }
+
+        /* Indicatore digitazione (futuro) */
+        .typing-indicator {
+            font-style: italic;
+            color: #666;
+            font-size: 12px;
+            padding: 5px 15px;
+            animation: typingPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes typingPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -39,50 +1036,2285 @@
         <div id="admin-login" class="screen active">
             <h1>🏰 Chess Host</h1>
             <h2>Accesso Amministratore</h2>
-            <div class="firebase-info"><strong>🚀 Versione Firebase!</strong><br>Partite Multiple • Sincronizzazione Real-Time • Cross-Device</div>
+            <div class="firebase-info">
+                <strong>🚀 Versione Firebase!</strong><br>
+                Partite Multiple • Sincronizzazione Real-Time • Cross-Device
+            </div>
             <div class="form-group">
                 <label for="admin-password">Password Amministratore:</label>
                 <input type="password" id="admin-password" placeholder="Inserisci la password" autocomplete="current-password">
             </div>
             <button class="btn" onclick="adminLogin()">Accedi</button>
-            <div id="login-message" style="color:red; margin-top:10px;"></div>
+            <div id="login-message"></div>
             <div class="connection-status" id="firebase-status">🔗 Connessione Firebase...</div>
         </div>
+
         <div id="admin-panel" class="screen">
-            <!-- Contenuto pannello amministratore -->
+            <h1>🎮 Pannello Amministratore</h1>
+            <button class="btn btn-secondary" onclick="logout()" style="float: right;">Logout</button>
+            
+            <h2>Crea Nuova Partita</h2>
+            <div class="form-group">
+                <label for="white-player">Nome Giocatore Bianco:</label>
+                <input type="text" id="white-player" value="Giocatore Bianco" placeholder="Nome giocatore bianco" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label for="black-player">Nome Giocatore Nero:</label>
+                <input type="text" id="black-player" value="Giocatore Nero" placeholder="Nome giocatore nero" maxlength="20">
+            </div>
+            <button class="btn" onclick="createGame()" id="create-game-btn">Crea Partita</button>
+            <div id="admin-message"></div>
+            
+            <hr style="margin: 30px 0; border: 1px solid #eee;">
+            
+            <h2>Partite Attive</h2>
+            <button class="btn btn-secondary" onclick="refreshActiveGames()" style="margin-bottom: 15px;">
+                🔄 Aggiorna Lista
+            </button>
+            <div id="active-games-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Caricamento partite...</p>
+                </div>
+            </div>
         </div>
+
         <div id="game-screen" class="screen">
             <h1>♔ Chess Host</h1>
-            <!-- ... resto HTML di gioco ... -->
+            <div class="player-names">
+                <span class="white-player" id="white-name">Giocatore Bianco</span>
+                <span class="black-player" id="black-name">Giocatore Nero</span>
+            </div>
+            <div class="game-info">
+                <div class="current-player" id="current-turn">Turno del Bianco</div>
+                <div id="game-status"></div>
+            </div>
+
+            <div class="timer-container" id="move-timer">
+                <div>⏱️ Tempo Rimasto: <span id="timer-display">5:00</span></div>
+                <div class="timer-bar" id="timer-bar"></div>
+            </div>
+
+            <div class="board-container">
+                <div class="chess-board" id="chess-board" role="grid" aria-label="Scacchiera da gioco"></div>
+            </div>
+            
+            <div class="game-controls">
+                <div class="control-row">
+                    <button class="theme-toggle" onclick="toggleTheme()">🌓 Cambia Tema</button>
+                    <button class="undo-btn" id="undo-btn" onclick="undoLastMove()" disabled>↩️ Annulla Mossa</button>
+                </div>
+            </div>
+
+            <div class="game-info" id="current-link-display">
+                <h4 style="margin: 0 0 10px 0;">🔗 Link Partita</h4>
+                <input type="text" id="current-game-url" readonly onclick="this.select()" style="width:100%; padding:8px; font-family:monospace;" aria-label="Link della partita">
+                <button class="btn" onclick="copyCurrentLink()">📋 Copia Link</button>
+            </div>
+
+            <div class="game-info" id="admin-controls" style="display:none;">
+                <h3>Controlli Amministratore</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                    <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                        <input type="checkbox" id="admin-override-mode" onchange="toggleAdminMode()" style="margin-right: 10px; transform: scale(1.2);">
+                        <div>
+                            <strong style="color: #333;">Modalità Amministratore Override</strong><br>
+                            <small style="color: #666;">Permette di muovere qualsiasi pezzo in qualsiasi momento</small>
+                        </div>
+                    </label>
+                </div>
+                <button class="btn btn-success" onclick="endGame('white')">🏆 Vittoria Bianco</button>
+                <button class="btn btn-success" onclick="endGame('black')">🏆 Vittoria Nero</button>
+                <button class="btn btn-secondary" onclick="endGame('draw')">🤝 Pareggio</button>
+                <button class="btn" onclick="goBackToAdminPanel()">⬅️ Torna al Pannello</button>
+            </div>
+            <button class="btn" onclick="goBackToAdminPanel()" id="back-to-panel-btn">⬅️ Torna al Pannello Admin</button>
+
+            <div class="moves-history">
+                <h4>📜 Cronologia Mosse:</h4>
+                <div id="moves-list"></div>
+            </div>
+
+            <div class="audio-controls">
+                <div class="audio-toggle" onclick="toggleAudio()">
+                    <input type="checkbox" id="audio-enabled" checked>
+                    <span>🔊 Effetti Audio</span>
+                </div>
+                <span style="font-size: 12px; color: #666;">Suoni per mosse, catture e scacco</span>
+            </div>
+
+            <div class="chat-container" id="chat-container">
+                <div class="chat-header">
+                    💬 Chat di Gioco
+                    <button class="chat-toggle" onclick="toggleChat()" id="chat-toggle-btn" style="float: right; margin: -4px 0; font-size: 12px;">
+                        Nascondi
+                        <span class="chat-notification" id="chat-notification" style="display: none;">!</span>
+                    </button>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-message system">
+                        <div>💡 Benvenuti nella chat! Scambiatevi complimenti e strategie.</div>
+                        <div class="chat-timestamp">Sistema</div>
+                    </div>
+                </div>
+                <div class="chat-input-container" id="chat-input-container">
+                    <input 
+                        type="text" 
+                        class="chat-input" 
+                        id="chat-input" 
+                        placeholder="Scrivi un messaggio..." 
+                        maxlength="200"
+                        onkeypress="handleChatKeyPress(event)"
+                    >
+                    <button class="chat-send-btn" onclick="sendChatMessage()" id="chat-send-btn">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-screen" class="screen">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Caricamento partita da Firebase...</p>
+            </div>
+        </div>
+
+        <div id="error-screen" class="screen">
+            <h1>⚠️ Errore</h1>
+            <div class="status-message status-error" id="error-message">
+                Link partita non valido o partita non trovata.
+            </div>
+            <button class="btn" onclick="window.location.href = window.location.pathname">🏠 Torna alla Home</button>
+        </div>
+
+        <div id="promotion-modal" class="promotion-modal">
+            <div class="promotion-content">
+                <h3>🎉 Promozione Pedone!</h3>
+                <p>Scegli in quale pezzo trasformare il tuo pedone:</p>
+                <div class="promotion-pieces">
+                    <div class="promotion-piece" onclick="promoteTopiece('queen')" title="Regina" role="button" tabindex="0">
+                        <span id="promotion-queen">♕</span>
+                    </div>
+                    <div class="promotion-piece" onclick="promoteTopiece('rook')" title="Torre" role="button" tabindex="0">
+                        <span id="promotion-rook">♖</span>
+                    </div>
+                    <div class="promotion-piece" onclick="promoteTopiece('bishop')" title="Alfiere" role="button" tabindex="0">
+                        <span id="promotion-bishop">♗</span>
+                    </div>
+                    <div class="promotion-piece" onclick="promoteTopiece('knight')" title="Cavallo" role="button" tabindex="0">
+                        <span id="promotion-knight">♘</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        const firebaseConfig = { apiKey: "AIzaSyC6imkgB2bRtUv113tDGFWdeNl-fWq_Oc8", authDomain: "scacchi-e4ae1.firebaseapp.com", databaseURL: "https://scacchi-e4ae1-default-rtdb.europe-west1.firebasedatabase.app", projectId: "scacchi-e4ae1", storageBucket: "scacchi-e4ae1.appspot.com", messagingSenderId: "655013026025", appId: "1:655013026025:web:a97e5bf05c7f2e25ba7878" };
+        import { getDatabase, ref, set, get, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6imkgB2bRtUv113tDGFWdeNl-fWq_Oc8",
+            authDomain: "scacchi-e4ae1.firebaseapp.com",
+            databaseURL: "https://scacchi-e4ae1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "scacchi-e4ae1",
+            storageBucket: "scacchi-e4ae1.firebasestorage.app",
+            messagingSenderId: "655013026025",
+            appId: "1:655013026025:web:a97e5bf05c7f2e25ba7878"
+        };
+
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        const connRef = ref(database, '.info/connected');
-        onValue(connRef, snap => {
-            const status = document.getElementById('firebase-status');
-            if (snap.val()) status.textContent='🟢 Firebase Online'; else status.textContent='🔴 Firebase Offline';
-        });
-        console.log('Firebase inizializzato');
 
+        window.firebaseApp = app;
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseGet = get;
+        window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
+
+        // Connection monitoring
+        const testRef = ref(database, '.info/connected');
+        onValue(testRef, (snapshot) => {
+            const connected = snapshot.val();
+            const statusEl = document.getElementById('firebase-status');
+            if (statusEl) {
+                if (connected) {
+                    statusEl.textContent = '🟢 Firebase Online';
+                    statusEl.className = 'connection-status connection-online';
+                } else {
+                    statusEl.textContent = '🔴 Firebase Offline';
+                    statusEl.className = 'connection-status connection-offline';
+                }
+            }
+            console.log('Firebase Status:', connected ? 'Connected' : 'Disconnected');
+        });
+        
+        console.log('🔥 Firebase inizializzato con successo!');
+    </script>
+
+    <script>
+        // === CONFIGURAZIONE E COSTANTI ===
         const ADMIN_PASSWORD = 'chess123';
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        
+        let gameState = {};
+        let currentGameListener = null;
+        let promotionData = null;
+
+        // === TIMER SISTEMA ===
+        let moveTimer = 300; // 5 minuti in secondi
+        let timerInterval = null;
+        let timerEnabled = true;
+
+        // === TEMA SISTEMA ===
+        let currentTheme = 'light';
+
+        // === ULTIMA MOSSA ===
+        let lastMove = { from: null, to: null };
+
+        const chessPieces = {
+            'white': { 'king': '♔', 'queen': '♕', 'rook': '♖', 'bishop': '♗', 'knight': '♘', 'pawn': '♙' },
+            'black': { 'king': '♚', 'queen': '♛', 'rook': '♜', 'bishop': '♝', 'knight': '♞', 'pawn': '♟' }
+        };
+
+        const pieceValues = {
+            'pawn': 1, 'knight': 3, 'bishop': 3, 'rook': 5, 'queen': 9, 'king': 0
+        };
+
+        // === SISTEMA TIMER ===
+        function startMoveTimer() {
+            if (!timerEnabled) return;
+            
+            moveTimer = 300; // Reset a 5 minuti
+            updateTimerDisplay();
+            
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                moveTimer--;
+                updateTimerDisplay();
+                
+                if (moveTimer <= 30) {
+                    document.getElementById('move-timer').classList.add('warning');
+                } else {
+                    document.getElementById('move-timer').classList.remove('warning');
+                }
+                
+                if (moveTimer <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
         }
-        window.adminLogin = function() {
-            const pw = document.getElementById('admin-password').value;
-            if (pw === ADMIN_PASSWORD) {
-                showScreen('admin-panel');
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(moveTimer / 60);
+            const seconds = moveTimer % 60;
+            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('timer-display').textContent = display;
+            
+            // Aggiorna barra progresso
+            const percentage = (moveTimer / 300) * 100;
+            document.getElementById('timer-bar').style.width = percentage + '%';
+        }
+
+        function stopMoveTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('move-timer').classList.remove('warning');
+        }
+
+        function handleTimeOut() {
+            playSound('check'); // Suono di allarme
+            addSystemMessage('⏰ Tempo scaduto! Il turno passa all\'avversario.');
+            
+            // Cambia giocatore automaticamente
+            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+            updateGameInfo();
+            debouncedSaveGame();
+            startMoveTimer(); // Inizia timer per prossimo giocatore
+        }
+
+        // === SISTEMA TEMA ===
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            
+            const themeBtn = document.querySelector('.theme-toggle');
+            themeBtn.textContent = currentTheme === 'light' ? '🌓 Tema Scuro' : '☀️ Tema Chiaro';
+            
+            // Salva preferenza
+            localStorage.setItem('chessTheme', currentTheme);
+            
+            console.log('🎨 Tema cambiato a:', currentTheme);
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('chessTheme') || 'light';
+            currentTheme = savedTheme;
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            
+            const themeBtn = document.querySelector('.theme-toggle');
+            if (themeBtn) {
+                themeBtn.textContent = currentTheme === 'light' ? '🌓 Tema Scuro' : '☀️ Tema Chiaro';
+            }
+        }
+
+        // === COORDINATE SCACCHIERA ===
+        function addCoordinates() {
+            const boardContainer = document.querySelector('.board-container');
+            const isWhitePlayer = gameState.playerColor === 'white' || gameState.isAdmin;
+            
+            // Rimuovi coordinate esistenti
+            boardContainer.querySelectorAll('.coordinate').forEach(el => el.remove());
+            
+            // Aggiungi file (a-h)
+            for (let col = 0; col < 8; col++) {
+                const fileCoord = document.createElement('div');
+                fileCoord.className = 'coordinate coord-file';
+                fileCoord.textContent = String.fromCharCode(97 + (isWhitePlayer ? col : 7 - col));
+                fileCoord.style.left = (col * 60 + 30) + 'px';
+                boardContainer.appendChild(fileCoord);
+            }
+            
+            // Aggiungi rank (1-8)
+            for (let row = 0; row < 8; row++) {
+                const rankCoord = document.createElement('div');
+                rankCoord.className = 'coordinate coord-rank';
+                rankCoord.textContent = isWhitePlayer ? (8 - row) : (row + 1);
+                rankCoord.style.top = (row * 60 + 30) + 'px';
+                boardContainer.appendChild(rankCoord);
+            }
+        }
+
+        // === HIGHLIGHT ULTIMA MOSSA ===
+        function highlightLastMove(from, to) {
+            // Rimuovi highlight precedenti
+            document.querySelectorAll('.square.last-move-from, .square.last-move-to').forEach(sq => {
+                sq.classList.remove('last-move-from', 'last-move-to');
+            });
+            
+            if (from !== null && to !== null) {
+                const fromSquare = document.querySelector(`[data-logical-index="${from}"]`);
+                const toSquare = document.querySelector(`[data-logical-index="${to}"]`);
+                
+                if (fromSquare) fromSquare.classList.add('last-move-from');
+                if (toSquare) toSquare.classList.add('last-move-to');
+                
+                lastMove = { from, to };
+            }
+        }
+
+        // === UNDO ULTIMA MOSSA (ADMIN) ===
+        async function undoLastMove() {
+            if (!gameState.isAdmin || gameState.moveHistory.length === 0) {
+                showMessage('game-status', '❌ Solo gli admin possono annullare le mosse', 'error');
+                return;
+            }
+            
+            if (!confirm('Sei sicuro di voler annullare l\'ultima mossa?')) return;
+            
+            try {
+                // Salva stato corrente per backup
+                const backupState = JSON.parse(JSON.stringify(gameState));
+                
+                // Rimuovi ultima mossa dalla cronologia
+                const lastMoveNotation = gameState.moveHistory.pop();
+                
+                // Ricostruisci stato da inizio partita
+                gameState.board = initializeBoard();
+                gameState.currentPlayer = 'white';
+                gameState.castlingRights = { 
+                    white: { kingside: true, queenside: true }, 
+                    black: { kingside: true, queenside: true } 
+                };
+                gameState.enPassantTarget = null;
+                gameState.halfMoveClock = 0;
+                gameState.fullMoveNumber = 1;
+                
+                // Riapplica tutte le mosse tranne l'ultima
+                for (let i = 0; i < gameState.moveHistory.length; i++) {
+                    // Qui servirebbe una funzione per riapplicare le mosse dalla notazione
+                    // Per semplicità, per ora non implemento il parsing completo
+                }
+                
+                await saveGameToFirebase();
+                renderBoard();
+                updateGameInfo();
+                updateMovesHistory();
+                
+                addSystemMessage(`↩️ Ultima mossa annullata: ${lastMoveNotation}`);
+                playSound('move');
+                
+                console.log('↩️ Mossa annullata:', lastMoveNotation);
+                
+            } catch (error) {
+                console.error('❌ Errore nell\'annullamento:', error);
+                showMessage('game-status', '❌ Errore nell\'annullamento della mossa', 'error');
+            }
+        }
+
+        // === SISTEMA AUDIO ===
+        let audioEnabled = true;
+        let audioContext = null;
+
+        function initAudioSystem() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('🔊 Sistema audio inizializzato');
+            } catch (error) {
+                console.warn('⚠️ Audio non supportato:', error);
+                audioEnabled = false;
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = document.getElementById('audio-enabled').checked;
+            console.log('🔊 Audio:', audioEnabled ? 'ATTIVO' : 'DISATTIVO');
+            
+            if (audioEnabled && !audioContext) {
+                initAudioSystem();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioEnabled || !audioContext) return;
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                switch (type) {
+                    case 'move':
+                        // Click discreto per mossa normale
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.1);
+                        break;
+                        
+                    case 'capture':
+                        // Crash drammatico per cattura
+                        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.3);
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        oscillator.type = 'sawtooth';
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                        
+                        // Secondo suono per enfasi
+                        setTimeout(() => {
+                            if (!audioEnabled || !audioContext) return;
+                            const osc2 = audioContext.createOscillator();
+                            const gain2 = audioContext.createGain();
+                            osc2.connect(gain2);
+                            gain2.connect(audioContext.destination);
+                            osc2.frequency.setValueAtTime(150, audioContext.currentTime);
+                            gain2.gain.setValueAtTime(0.1, audioContext.currentTime);
+                            gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                            osc2.type = 'square';
+                            osc2.start(audioContext.currentTime);
+                            osc2.stop(audioContext.currentTime + 0.2);
+                        }, 100);
+                        break;
+                        
+                    case 'check':
+                        // Alarm urgente per scacco
+                        for (let i = 0; i < 3; i++) {
+                            setTimeout(() => {
+                                if (!audioEnabled || !audioContext) return;
+                                const checkOsc = audioContext.createOscillator();
+                                const checkGain = audioContext.createGain();
+                                checkOsc.connect(checkGain);
+                                checkGain.connect(audioContext.destination);
+                                checkOsc.frequency.setValueAtTime(1000, audioContext.currentTime);
+                                checkOsc.frequency.setValueAtTime(1200, audioContext.currentTime + 0.1);
+                                checkGain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                                checkGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                                checkOsc.start(audioContext.currentTime);
+                                checkOsc.stop(audioContext.currentTime + 0.2);
+                            }, i * 150);
+                        }
+                        break;
+                        
+                    case 'victory':
+                        // Fanfare celebrativa per vittoria
+                        const notes = [523.25, 659.25, 783.99, 1046.50]; // Do, Mi, Sol, Do alto
+                        notes.forEach((freq, index) => {
+                            setTimeout(() => {
+                                if (!audioEnabled || !audioContext) return;
+                                const victoryOsc = audioContext.createOscillator();
+                                const victoryGain = audioContext.createGain();
+                                victoryOsc.connect(victoryGain);
+                                victoryGain.connect(audioContext.destination);
+                                victoryOsc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                                victoryGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                                victoryGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                                victoryOsc.type = 'sine';
+                                victoryOsc.start(audioContext.currentTime);
+                                victoryOsc.stop(audioContext.currentTime + 0.4);
+                            }, index * 200);
+                        });
+                        break;
+                        
+                    case 'message':
+                        // Suono discreto per nuovo messaggio
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.05);
+                        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                        oscillator.type = 'sine';
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.15);
+                        break;
+                }
+            } catch (error) {
+                console.warn('⚠️ Errore riproduzione audio:', error);
+            }
+        }
+
+        // === SISTEMA CHAT ===
+        let chatVisible = true;
+        let unreadMessages = 0;
+
+        function toggleChat() {
+            const container = document.getElementById('chat-container');
+            const toggleBtn = document.getElementById('chat-toggle-btn');
+            const notification = document.getElementById('chat-notification');
+            
+            chatVisible = !chatVisible;
+            
+            if (chatVisible) {
+                container.style.display = 'block';
+                toggleBtn.textContent = 'Nascondi';
+                notification.style.display = 'none';
+                unreadMessages = 0;
+                
+                // Scroll to bottom when opening
+                setTimeout(() => {
+                    const messages = document.getElementById('chat-messages');
+                    messages.scrollTop = messages.scrollHeight;
+                }, 100);
             } else {
-                document.getElementById('login-message').textContent = 'Password errata. Riprova.';
+                container.style.display = 'none';
+                toggleBtn.textContent = 'Mostra Chat';
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message || !gameState.gameId) return;
+            
+            const playerColor = gameState.playerColor || (gameState.isAdmin ? 'white' : 'black');
+            const playerName = gameState.players[playerColor];
+            
+            const chatMessage = {
+                id: Date.now(),
+                player: playerColor,
+                playerName: playerName,
+                text: message,
+                timestamp: Date.now()
+            };
+            
+            try {
+                // Salva messaggio su Firebase
+                if (!gameState.messages) gameState.messages = [];
+                gameState.messages.push(chatMessage);
+                
+                await saveGameToFirebase();
+                
+                input.value = '';
+                console.log('💬 Messaggio inviato:', message);
+                
+            } catch (error) {
+                console.error('❌ Errore invio messaggio:', error);
+                showMessage('game-status', 'Errore invio messaggio', 'error');
+            }
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        function displayChatMessages() {
+            const messagesContainer = document.getElementById('chat-messages');
+            if (!messagesContainer || !gameState.messages) return;
+            
+            // Rimuovi solo i messaggi non-sistema
+            const systemMessages = messagesContainer.querySelectorAll('.chat-message.system');
+            messagesContainer.innerHTML = '';
+            
+            // Rimetti i messaggi di sistema
+            systemMessages.forEach(msg => messagesContainer.appendChild(msg));
+            
+            // Aggiungi tutti i messaggi
+            gameState.messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${msg.player}`;
+                
+                const time = new Date(msg.timestamp).toLocaleTimeString('it-IT', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                messageDiv.innerHTML = `
+                    <div>${msg.text}</div>
+                    <div class="chat-timestamp">${msg.playerName} • ${time}</div>
+                `;
+                
+                messagesContainer.appendChild(messageDiv);
+            });
+            
+            // Auto-scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            if (!gameState.messages) gameState.messages = [];
+            
+            const systemMessage = {
+                id: Date.now(),
+                player: 'system',
+                playerName: 'Sistema',
+                text: text,
+                timestamp: Date.now()
+            };
+            
+            gameState.messages.push(systemMessage);
+            displayChatMessages();
+        }
+
+        // === UTILITY FUNCTIONS ===
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showMessage(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status-message status-${type}`;
+            messageDiv.textContent = message;
+            element.innerHTML = '';
+            element.appendChild(messageDiv);
+            
+            setTimeout(() => { 
+                if (element.contains(messageDiv)) {
+                    element.removeChild(messageDiv);
+                }
+            }, 5000);
+        }
+
+        function generateGameId() { 
+            return Math.random().toString(36).substr(2, 8).toUpperCase(); 
+        }
+
+        function getUrlParameter(name) { 
+            return new URLSearchParams(window.location.search).get(name); 
+        }
+
+        function getGameUrl(gameId) {
+            return `${window.location.origin}${window.location.pathname}?game=${gameId}`;
+        }
+
+        function indexToAlgebraic(index) {
+            const row = Math.floor(index / 8);
+            const col = index % 8;
+            return String.fromCharCode(97 + col) + (8 - row);
+        }
+
+        function algebraicToIndex(algebraic) {
+            if (typeof algebraic !== 'string' || algebraic.length !== 2) return -1;
+            const col = algebraic.charCodeAt(0) - 97; // a=0, b=1, etc.
+            const row = 8 - parseInt(algebraic[1]); // 8=0, 7=1, etc.
+            if (col < 0 || col > 7 || row < 0 || row > 7) return -1;
+            return row * 8 + col;
+        }
+
+        // === GAME STATE MANAGEMENT ===
+        function resetGameState() {
+            gameState = {
+                board: null,
+                currentPlayer: 'white',
+                gameActive: false,
+                selectedSquare: null,
+                moveHistory: [],
+                messages: [], // Chat messages
+                players: { white: 'Giocatore Bianco', black: 'Giocatore Nero' },
+                gameId: null,
+                isAdmin: false,
+                adminOverrideMode: false,
+                playerColor: null,
+                gameEnded: false,
+                result: null,
+                castlingRights: { 
+                    white: { kingside: true, queenside: true }, 
+                    black: { kingside: true, queenside: true } 
+                },
+                enPassantTarget: null,
+                halfMoveClock: 0,
+                fullMoveNumber: 1,
+                lastUpdate: Date.now()
+            };
+        }
+
+        function initializeBoard() {
+            return [
+                ['black', 'rook'], ['black', 'knight'], ['black', 'bishop'], ['black', 'queen'], 
+                ['black', 'king'], ['black', 'bishop'], ['black', 'knight'], ['black', 'rook'],
+                ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'], 
+                ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'], ['black', 'pawn'],
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'], 
+                ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'], ['white', 'pawn'],
+                ['white', 'rook'], ['white', 'knight'], ['white', 'bishop'], ['white', 'queen'], 
+                ['white', 'king'], ['white', 'bishop'], ['white', 'knight'], ['white', 'rook']
+            ];
+        }
+
+        // === FIREBASE OPERATIONS ===
+        const debouncedSaveGame = debounce(async () => {
+            await saveGameToFirebase();
+        }, 300);
+
+        async function saveGameToFirebase() {
+            if (!gameState.gameId) return false;
+            try {
+                const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameState.gameId);
+                // Escludi dati locali che non devono essere sincronizzati
+                const { isAdmin, playerColor, adminOverrideMode, ...dataToSave } = gameState;
+                dataToSave.lastUpdate = Date.now();
+                await window.firebaseSet(gameRef, dataToSave);
+                console.log('🔥 Partita salvata su Firebase:', gameState.gameId);
+                return true;
+            } catch (error) {
+                console.error('❌ Errore salvataggio Firebase:', error);
+                showMessage('game-status', 'Errore di sincronizzazione. Riprovo...', 'warning');
+                return false;
+            }
+        }
+
+        async function loadGameFromFirebase(gameId) {
+            if (!gameId) return false;
+            try {
+                const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameId);
+                const snapshot = await window.firebaseGet(gameRef);
+                if (snapshot.exists()) {
+                    resetGameState();
+                    const firebaseData = snapshot.val();
+                    Object.assign(gameState, firebaseData);
+                    gameState.gameId = gameId;
+                    console.log('🔥 Partita caricata da Firebase:', gameId);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('❌ Errore caricamento Firebase:', error);
+                return false;
+            }
+        }
+
+        function setupGameListener(gameId) {
+            if (!gameId) return;
+            if (currentGameListener) {
+                window.firebaseOff(currentGameListener);
+            }
+            
+            const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameId);
+            currentGameListener = gameRef;
+            
+            window.firebaseOnValue(gameRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const firebaseData = snapshot.val();
+                    if (firebaseData.lastUpdate && 
+                        (!gameState.lastUpdate || firebaseData.lastUpdate > gameState.lastUpdate)) {
+                        console.log('📡 Sincronizzazione real-time ricevuta');
+                        
+                        const oldPlayer = gameState.currentPlayer;
+                        const oldMessagesCount = gameState.messages ? gameState.messages.length : 0;
+                        
+                        // Salva le impostazioni locali prima dell'aggiornamento
+                        const localIsAdmin = gameState.isAdmin;
+                        const localPlayerColor = gameState.playerColor;
+                        const localAdminOverride = gameState.adminOverrideMode;
+                        
+                        // Aggiorna con i dati da Firebase
+                        Object.assign(gameState, firebaseData);
+                        gameState.lastUpdate = firebaseData.lastUpdate;
+                        
+                        // Ripristina le impostazioni locali
+                        gameState.isAdmin = localIsAdmin;
+                        gameState.playerColor = localPlayerColor;
+                        gameState.adminOverrideMode = localAdminOverride;
+                        
+                        // Assicura che messages esista
+                        if (!gameState.messages) gameState.messages = [];
+                        
+                        if (document.getElementById('game-screen').classList.contains('active')) {
+                            renderBoard();
+                            updateGameInfo();
+                            updateMovesHistory();
+                            displayChatMessages();
+                            
+                            // Notifica cambio turno
+                            if (oldPlayer !== gameState.currentPlayer && gameState.playerColor === gameState.currentPlayer) {
+                                showMessage('game-status', 'È il tuo turno!', 'info');
+                                playSound('move'); // Suono per notificare il turno
+                            }
+                            
+                            // Notifica nuovi messaggi
+                            if (gameState.messages.length > oldMessagesCount) {
+                                const newMessagesCount = gameState.messages.length - oldMessagesCount;
+                                console.log('💬 Nuovi messaggi ricevuti:', newMessagesCount);
+                                
+                                if (!chatVisible) {
+                                    unreadMessages += newMessagesCount;
+                                    const notification = document.getElementById('chat-notification');
+                                    if (notification && unreadMessages > 0) {
+                                        notification.style.display = 'flex';
+                                        notification.textContent = unreadMessages > 9 ? '9+' : unreadMessages;
+                                    }
+                                }
+                                
+                                // Suono per nuovo messaggio (solo se non è il nostro messaggio)
+                                const lastMessage = gameState.messages[gameState.messages.length - 1];
+                                if (lastMessage && lastMessage.player !== gameState.playerColor) {
+                                    playSound('message');
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (document.getElementById('game-screen').classList.contains('active')) {
+                        showScreen('error-screen');
+                        document.getElementById('error-message').textContent = 'Questa partita è stata eliminata dall\'amministratore.';
+                    }
+                }
+            });
+        }
+
+        // === ADMIN FUNCTIONS ===
+        function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                localStorage.setItem('chessAdminAuth', 'true');
+                showAdminPanel();
+            } else {
+                showMessage('login-message', 'Password non corretta!', 'error');
+                document.getElementById('admin-password').value = '';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('chessAdminAuth');
+            if (currentGameListener) {
+                window.firebaseOff(currentGameListener);
+                currentGameListener = null;
+            }
+            showScreen('admin-login');
+            document.getElementById('admin-password').value = '';
+        }
+
+        function showAdminPanel() {
+            showScreen('admin-panel');
+            displayActiveGames();
+        }
+
+        async function displayActiveGames() {
+            const listContainer = document.getElementById('active-games-list');
+            listContainer.innerHTML = `<div class="loading"><div class="spinner"></div><p>Caricamento partite...</p></div>`;
+
+            try {
+                const gamesRef = window.firebaseRef(window.firebaseDatabase, 'games');
+                const snapshot = await window.firebaseGet(gamesRef);
+
+                if (snapshot.exists()) {
+                    const games = snapshot.val();
+                    listContainer.innerHTML = '';
+                    
+                    // Ordina per ultimo aggiornamento
+                    const sortedGames = Object.entries(games).sort((a, b) => 
+                        (b[1].lastUpdate || 0) - (a[1].lastUpdate || 0)
+                    );
+
+                    sortedGames.forEach(([gameId, gameData]) => {
+                        const card = document.createElement('div');
+                        card.className = 'game-card';
+
+                        const turnPlayerName = gameData.players[gameData.currentPlayer];
+                        let status;
+                        if (gameData.gameEnded) {
+                            status = gameData.result || 'Partita Terminata';
+                        } else {
+                            status = `Turno di: ${turnPlayerName}`;
+                        }
+
+                        const lastUpdate = gameData.lastUpdate ? 
+                            new Date(gameData.lastUpdate).toLocaleString('it-IT') : 
+                            'Mai aggiornata';
+
+                        card.innerHTML = `
+                            <h4>🎯 Partita: ${gameId}</h4>
+                            <p><strong>Giocatori:</strong> ${gameData.players.white} ⚪ vs ${gameData.players.black} ⚫</p>
+                            <p><strong>Stato:</strong> ${status}</p>
+                            <p><strong>Ultimo aggiornamento:</strong> ${lastUpdate}</p>
+                            <p><strong>Mosse:</strong> ${gameData.moveHistory ? gameData.moveHistory.length : 0}</p>
+                            <div class="actions">
+                                <button class="btn" onclick="viewGame('${gameId}')">🎮 Gioca/Visualizza</button>
+                                <button class="btn btn-secondary" onclick="copyGameLink('${gameId}')">📋 Copia Link</button>
+                                <button class="btn btn-danger" onclick="deleteGame('${gameId}')">🗑️ Elimina</button>
+                            </div>
+                        `;
+                        listContainer.appendChild(card);
+                    });
+                } else {
+                    listContainer.innerHTML = '<div class="status-message status-info">Nessuna partita attiva trovata. Creane una nuova!</div>';
+                }
+            } catch (error) {
+                console.error("❌ Errore nel caricare le partite:", error);
+                listContainer.innerHTML = '<div class="status-message status-error">Impossibile caricare le partite. Controlla la connessione a Firebase.</div>';
+            }
+        }
+
+        function refreshActiveGames() {
+            displayActiveGames();
+            showMessage('admin-message', 'Lista partite aggiornata!', 'success');
+        }
+
+        async function createGame() {
+            const createBtn = document.getElementById('create-game-btn');
+            createBtn.disabled = true;
+            createBtn.textContent = 'Creazione...';
+
+            try {
+                resetGameState();
+                gameState.gameId = generateGameId();
+                
+                const whiteName = document.getElementById('white-player').value.trim();
+                const blackName = document.getElementById('black-player').value.trim();
+                
+                gameState.players.white = whiteName || 'Giocatore Bianco';
+                gameState.players.black = blackName || 'Giocatore Nero';
+                gameState.board = initializeBoard();
+                gameState.gameActive = true;
+                
+                // Inizializza chat con messaggio di sistema
+                gameState.messages = [{
+                    id: Date.now(),
+                    player: 'system',
+                    playerName: 'Sistema',
+                    text: `🎯 Partita creata! ${gameState.players.white} (Bianchi) vs ${gameState.players.black} (Neri)`,
+                    timestamp: Date.now()
+                }];
+
+                const saved = await saveGameToFirebase();
+                if (saved) {
+                    showMessage('admin-message', `🎉 Partita ${gameState.gameId} creata con successo!`, 'success');
+                    await displayActiveGames();
+                } else {
+                    showMessage('admin-message', '❌ Errore nella creazione della partita.', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Errore creazione partita:', error);
+                showMessage('admin-message', '❌ Errore nella creazione della partita.', 'error');
+            } finally {
+                createBtn.disabled = false;
+                createBtn.textContent = 'Crea Partita';
+            }
+        }
+
+        async function viewGame(gameId) {
+            showScreen('loading-screen');
+            const loaded = await loadGameFromFirebase(gameId);
+            if (loaded) {
+                gameState.isAdmin = true;
+                gameState.playerColor = 'white';
+                setupGameListener(gameId);
+                showGame();
+            } else {
+                showScreen('error-screen');
+                document.getElementById('error-message').textContent = `Partita ${gameId} non trovata o non più disponibile.`;
+            }
+        }
+
+        function copyGameLink(gameId) {
+            const url = getGameUrl(gameId);
+            navigator.clipboard.writeText(url).then(() => {
+                showMessage('admin-message', `📋 Link per la partita ${gameId} copiato!`, 'success');
+            }, () => {
+                showMessage('admin-message', `❌ Errore nel copiare il link.`, 'error');
+            });
+        }
+
+        async function deleteGame(gameId) {
+            if (confirm(`⚠️ Sei sicuro di voler eliminare la partita ${gameId}?\n\nL'azione è irreversibile e disconnetterà tutti i giocatori.`)) {
+                try {
+                    const gameRef = window.firebaseRef(window.firebaseDatabase, 'games/' + gameId);
+                    await window.firebaseSet(gameRef, null);
+                    showMessage('admin-message', `🗑️ Partita ${gameId} eliminata con successo.`, 'success');
+                    await displayActiveGames();
+                } catch (error) {
+                    console.error("❌ Errore eliminazione partita:", error);
+                    showMessage('admin-message', `❌ Errore durante l'eliminazione della partita.`, 'error');
+                }
+            }
+        }
+
+        function goBackToAdminPanel() {
+            if (currentGameListener) {
+                window.firebaseOff(currentGameListener);
+                currentGameListener = null;
+            }
+            showAdminPanel();
+        }
+
+        // === GAME FUNCTIONS ===
+        function showGame() {
+            if (!gameState.gameActive && !gameState.gameEnded) {
+                showScreen('error-screen');
+                document.getElementById('error-message').textContent = 'Nessuna partita attiva.';
+                return;
+            }
+
+            showScreen('game-screen');
+            document.getElementById('white-name').textContent = gameState.players.white;
+            document.getElementById('black-name').textContent = gameState.players.black;
+            
+            const adminControls = document.getElementById('admin-controls');
+            const backBtn = document.getElementById('back-to-panel-btn');
+            const adminCheckbox = document.getElementById('admin-override-mode');
+            
+            if (gameState.isAdmin) {
+                adminControls.style.display = 'block';
+                backBtn.style.display = 'none';
+                // Reset modalità admin override quando si carica la partita
+                gameState.adminOverrideMode = false;
+                adminCheckbox.checked = false;
+            } else {
+                adminControls.style.display = 'none';
+                backBtn.style.display = 'block';
+                // Assicurati che non sia attiva per non-admin
+                gameState.adminOverrideMode = false;
+            }
+
+            // Inizializza sistemi audio e chat
+            initAudioSystem();
+            
+            // Assicura che messages esista
+            if (!gameState.messages) gameState.messages = [];
+            
+            // Reset contatori chat
+            chatVisible = true;
+            unreadMessages = 0;
+            document.getElementById('chat-notification').style.display = 'none';
+            
+            // Aggiungi messaggio di benvenuto se è una nuova partita
+            if (gameState.messages.length === 0 || !gameState.messages.some(msg => msg.player === 'system')) {
+                addSystemMessage(`🎯 Partita iniziata: ${gameState.players.white} vs ${gameState.players.black}`);
+            }
+
+            updateCurrentGameLink();
+            renderBoard();
+            updateGameInfo();
+            updateMovesHistory();
+            displayChatMessages();
+        }
+
+        function updateCurrentGameLink() {
+            const linkField = document.getElementById('current-game-url');
+            if (linkField && gameState.gameId) {
+                linkField.value = getGameUrl(gameState.gameId);
+            }
+        }
+
+        function copyCurrentLink() {
+            const linkField = document.getElementById('current-game-url');
+            navigator.clipboard.writeText(linkField.value).then(() => {
+                showMessage('game-status', '📋 Link copiato!', 'success');
+            }).catch(() => {
+                showMessage('game-status', '❌ Errore nel copiare il link.', 'error');
+            });
+        }
+
+        // === ANIMAZIONI ===
+        function animateMove(fromIndex, toIndex, piece, callback) {
+            const fromSquare = document.querySelector(`[data-logical-index="${fromIndex}"]`);
+            const toSquare = document.querySelector(`[data-logical-index="${toIndex}"]`);
+            
+            if (!fromSquare || !toSquare) {
+                console.warn('❌ Impossibile animare: caselle non trovate');
+                callback();
+                return;
+            }
+            
+            const [color, pieceType] = piece;
+            const pieceSymbol = chessPieces[color][pieceType];
+            
+            // Ottieni posizioni delle caselle
+            const fromRect = fromSquare.getBoundingClientRect();
+            const toRect = toSquare.getBoundingClientRect();
+            
+            // Crea pezzo animato
+            const animatedPiece = document.createElement('div');
+            animatedPiece.className = `piece-moving piece-${color}`;
+            animatedPiece.textContent = pieceSymbol;
+            animatedPiece.style.position = 'fixed';
+            animatedPiece.style.left = fromRect.left + fromRect.width/2 - 20 + 'px';
+            animatedPiece.style.top = fromRect.top + fromRect.height/2 - 20 + 'px';
+            animatedPiece.style.width = '40px';
+            animatedPiece.style.height = '40px';
+            animatedPiece.style.textAlign = 'center';
+            animatedPiece.style.lineHeight = '40px';
+            
+            document.body.appendChild(animatedPiece);
+            
+            // Nascondi pezzo originale
+            const originalPieceElement = fromSquare.querySelector('span');
+            if (originalPieceElement) {
+                originalPieceElement.style.visibility = 'hidden';
+            }
+            
+            // Animazione verso destinazione
+            setTimeout(() => {
+                animatedPiece.style.left = toRect.left + toRect.width/2 - 20 + 'px';
+                animatedPiece.style.top = toRect.top + toRect.height/2 - 20 + 'px';
+                
+                // Rimuovi pezzo animato e completa mossa
+                setTimeout(() => {
+                    document.body.removeChild(animatedPiece);
+                    callback();
+                }, 600);
+            }, 50);
+        }
+
+        function animateCapture(capturedSquare, callback) {
+            const pieceElement = capturedSquare.querySelector('span');
+            if (pieceElement) {
+                pieceElement.classList.add('piece-captured');
+                setTimeout(callback, 600);
+            } else {
+                callback();
+            }
+        }
+
+        // === CHESS LOGIC ===
+        function renderBoard() {
+            const board = document.getElementById('chess-board');
+            const isWhitePlayer = gameState.playerColor === 'white' || gameState.isAdmin;
+            
+            // RICOSTRUISCI SEMPRE la scacchiera per essere sicuri
+            board.innerHTML = '';
+            
+            for (let visualRow = 0; visualRow < 8; visualRow++) {
+                for (let visualCol = 0; visualCol < 8; visualCol++) {
+                    const visualIndex = visualRow * 8 + visualCol;
+                    
+                    // Calcola l'indice logico basato sull'orientamento
+                    const logicalRow = isWhitePlayer ? visualRow : 7 - visualRow;
+                    const logicalCol = isWhitePlayer ? visualCol : 7 - visualCol;
+                    const logicalIndex = logicalRow * 8 + logicalCol;
+                    
+                    const square = document.createElement('div');
+                    const isWhiteSquare = (visualRow + visualCol) % 2 === 0;
+                    
+                    square.className = `square ${isWhiteSquare ? 'white' : 'black'}`;
+                    square.setAttribute('role', 'gridcell');
+                    square.setAttribute('tabindex', '0');
+                    square.setAttribute('data-logical-index', logicalIndex);
+                    square.setAttribute('aria-label', indexToAlgebraic(logicalIndex));
+                    
+                    // Event listeners
+                    square.addEventListener('click', () => handleSquareClick(logicalIndex));
+                    square.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleSquareClick(logicalIndex);
+                        }
+                    });
+                    
+                    // Contenuto della casella
+                    const piece = gameState.board[logicalIndex];
+                    if (piece) {
+                        const [color, pieceType] = piece;
+                        const pieceSymbol = chessPieces[color][pieceType];
+                        
+                        // Crea elemento pezzo con styling
+                        const pieceElement = document.createElement('span');
+                        pieceElement.textContent = pieceSymbol;
+                        pieceElement.className = `piece-${color}`;
+                        pieceElement.setAttribute('data-piece', `${color}-${pieceType}`);
+                        
+                        square.appendChild(pieceElement);
+                        
+                        // Marca come non giocabili i pezzi che non sono del giocatore corrente
+                        // (a meno che non sia attiva la modalità admin override per un vero admin)
+                        const reallyAdmin = localStorage.getItem('chessAdminAuth') === 'true';
+                        if (gameState.playerColor && color !== gameState.playerColor && 
+                            !(reallyAdmin && gameState.isAdmin && gameState.adminOverrideMode)) {
+                            square.classList.add('not-playable');
+                        }
+                        
+                        // Evidenzia re sotto scacco
+                        if (pieceType === 'king' && isKingInCheck(color, gameState.board)) {
+                            square.classList.add('in-check');
+                        }
+                    }
+                    
+                    board.appendChild(square);
+                }
+            }
+            
+            // Aggiungi coordinate
+            addCoordinates();
+            
+            // Evidenzia ultima mossa
+            if (lastMove.from !== null && lastMove.to !== null) {
+                highlightLastMove(lastMove.from, lastMove.to);
+            }
+            
+            // Aggiorna pulsante undo
+            const undoBtn = document.getElementById('undo-btn');
+            if (undoBtn && gameState.isAdmin) {
+                undoBtn.disabled = gameState.moveHistory.length === 0;
+            }
+            
+            console.log('🎮 Scacchiera renderizzata per', isWhitePlayer ? 'bianchi' : 'neri');
+        }
+
+        function handleSquareClick(logicalIndex) {
+            console.log('🖱️ Click su casella logica', logicalIndex, '(' + indexToAlgebraic(logicalIndex) + ')');
+            
+            if (!gameState.gameActive || gameState.gameEnded) {
+                showMessage('game-status', '⚠️ La partita è terminata.', 'warning');
+                return;
+            }
+
+            if (!canPlayerMove()) {
+                showMessage('game-status', '⏳ Non è il tuo turno!', 'warning');
+                return;
+            }
+
+            // Rimuovi evidenziazioni precedenti
+            document.querySelectorAll('.square.selected, .square.possible-move, .square.possible-capture').forEach(sq => {
+                sq.classList.remove('selected', 'possible-move', 'possible-capture');
+            });
+
+            const piece = gameState.board[logicalIndex];
+            const clickedSquare = document.querySelector(`[data-logical-index="${logicalIndex}"]`);
+            
+            console.log('🔍 Pezzo alla posizione:', piece, 'Square trovato:', !!clickedSquare);
+            
+            if (gameState.selectedSquare === null) {
+                // PRIMO CLICK: Selezione pezzo
+                const reallyAdmin = localStorage.getItem('chessAdminAuth') === 'true';
+                const canSelectPiece = piece && piece[0] === gameState.currentPlayer && 
+                    (piece[0] === gameState.playerColor || (reallyAdmin && gameState.isAdmin && gameState.adminOverrideMode));
+                    
+                if (canSelectPiece) {
+                    gameState.selectedSquare = logicalIndex;
+                    if (clickedSquare) {
+                        clickedSquare.classList.add('selected');
+                    }
+                    highlightPossibleMoves(logicalIndex);
+                    
+                    // Feedback
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    console.log('🎯 Pezzo selezionato:', piece, 'alla posizione', indexToAlgebraic(logicalIndex));
+                } else {
+                    if (piece && piece[0] !== gameState.currentPlayer) {
+                        console.log('❌ Non è il turno di questo colore');
+                    } else if (piece && piece[0] !== gameState.playerColor && !(reallyAdmin && gameState.isAdmin && gameState.adminOverrideMode)) {
+                        console.log('❌ Non puoi muovere i pezzi dell\'avversario (attiva Modalità Admin Override per farlo)');
+                    } else {
+                        console.log('❌ Non puoi selezionare questo pezzo');
+                    }
+                }
+            } else {
+                // SECONDO CLICK: Tentativo di mossa o nuova selezione
+                console.log('🎯 Secondo click - tentativo mossa da', indexToAlgebraic(gameState.selectedSquare), 'a', indexToAlgebraic(logicalIndex));
+                
+                if (isValidMove(gameState.selectedSquare, logicalIndex)) {
+                    // MOSSA VALIDA - Esegui mossa
+                    console.log('✅ Mossa valida da', indexToAlgebraic(gameState.selectedSquare), 'a', indexToAlgebraic(logicalIndex));
+                    makeMove(gameState.selectedSquare, logicalIndex);
+                    gameState.selectedSquare = null; // Reset dopo mossa
+                } else {
+                    const reallyAdmin = localStorage.getItem('chessAdminAuth') === 'true';
+                    const canSelectNewPiece = piece && piece[0] === gameState.currentPlayer && 
+                        (piece[0] === gameState.playerColor || (reallyAdmin && gameState.isAdmin && gameState.adminOverrideMode));
+                        
+                    if (canSelectNewPiece) {
+                        // SELEZIONE NUOVO PEZZO
+                        console.log('🔄 Nuovo pezzo selezionato:', piece);
+                        gameState.selectedSquare = logicalIndex;
+                        if (clickedSquare) {
+                            clickedSquare.classList.add('selected');
+                        }
+                        highlightPossibleMoves(logicalIndex);
+                    } else {
+                        // CLICK SU CASELLA NON VALIDA - Deseleziona
+                        console.log('❌ Click non valido, deselezionando');
+                        gameState.selectedSquare = null;
+                    }
+                }
+            }
+        }
+
+        function toggleAdminMode() {
+            const checkbox = document.getElementById('admin-override-mode');
+            
+            // Solo i veri admin possono cambiare modalità
+            if (!gameState.isAdmin) {
+                checkbox.checked = false;
+                showMessage('game-status', '❌ Solo gli amministratori possono usare questa modalità', 'error');
+                return;
+            }
+            
+            gameState.adminOverrideMode = checkbox.checked;
+            console.log('🔧 Modalità Admin Override:', gameState.adminOverrideMode ? 'ATTIVA' : 'DISATTIVA');
+            
+            if (gameState.adminOverrideMode) {
+                showMessage('game-status', '⚠️ Modalità Amministratore ATTIVA: puoi muovere qualsiasi pezzo', 'warning');
+            } else {
+                showMessage('game-status', '✅ Modalità normale RIPRISTINATA: rispetta i turni', 'success');
+            }
+            
+            // Aggiorna la visualizzazione della scacchiera
+            renderBoard();
+        }
+
+        function canPlayerMove() {
+            // Verifica che sia effettivamente un admin (non solo che la flag sia true)
+            const reallyAdmin = localStorage.getItem('chessAdminAuth') === 'true';
+            
+            // Modalità admin override: può sempre muovere SOLO se è davvero admin
+            if (reallyAdmin && gameState.isAdmin && gameState.adminOverrideMode) {
+                console.log('🔧 Admin override attivo - può muovere sempre');
+                return true;
+            }
+            
+            // Modalità normale: solo il giocatore del turno corrente può muovere
+            const canMove = gameState.playerColor === gameState.currentPlayer;
+            console.log('🔍 Può muovere?', canMove, '| playerColor:', gameState.playerColor, '| currentPlayer:', gameState.currentPlayer, '| adminOverride:', gameState.adminOverrideMode);
+            return canMove;
+        }
+
+        function highlightPossibleMoves(fromIndex) {
+            console.log('🎯 Evidenziando mosse possibili da', indexToAlgebraic(fromIndex));
+            
+            for (let toIndex = 0; toIndex < 64; toIndex++) {
+                if (isValidMove(fromIndex, toIndex)) {
+                    console.log('✅ Mossa possibile verso', indexToAlgebraic(toIndex));
+                    
+                    const targetSquare = document.querySelector(`[data-logical-index="${toIndex}"]`);
+                    
+                    if (targetSquare) {
+                        const isCapture = gameState.board[toIndex] || 
+                                        (gameState.board[fromIndex][1] === 'pawn' && gameState.enPassantTarget === toIndex);
+                        targetSquare.classList.add(isCapture ? 'possible-capture' : 'possible-move');
+                        console.log('✅ Evidenziata casella', indexToAlgebraic(toIndex), isCapture ? '(cattura)' : '(mossa)');
+                    } else {
+                        console.error('❌ Non trovata casella per indice', toIndex, indexToAlgebraic(toIndex));
+                    }
+                }
+            }
+        }
+
+        function isValidMove(from, to) {
+            if (from === to) {
+                console.log('❌ Mossa non valida: stessa casella');
+                return false;
+            }
+            if (from < 0 || from > 63 || to < 0 || to > 63) {
+                console.log('❌ Mossa non valida: indici fuori range', from, to);
+                return false;
+            }
+            
+            const piece = gameState.board[from];
+            if (!piece || piece[0] !== gameState.currentPlayer) {
+                console.log('❌ Mossa non valida: pezzo non valido o non del giocatore corrente', piece, gameState.currentPlayer);
+                return false;
+            }
+            
+            const targetPiece = gameState.board[to];
+            if (targetPiece && targetPiece[0] === gameState.currentPlayer) {
+                console.log('❌ Mossa non valida: casella occupata da proprio pezzo');
+                return false;
+            }
+            
+            // Simula la mossa per controllare se lascia il re sotto scacco
+            const tempBoard = JSON.parse(JSON.stringify(gameState.board));
+            tempBoard[to] = tempBoard[from];
+            tempBoard[from] = null;
+            
+            // Gestione en passant nella simulazione
+            if (piece[1] === 'pawn' && to === gameState.enPassantTarget) {
+                const capturedPawnIndex = to + (piece[0] === 'white' ? 8 : -8);
+                tempBoard[capturedPawnIndex] = null;
+            }
+            
+            if (isKingInCheck(gameState.currentPlayer, tempBoard)) {
+                console.log('❌ Mossa non valida: lascerebbe il re sotto scacco');
+                return false;
+            }
+
+            const [color, pieceType] = piece;
+            const fromRow = Math.floor(from / 8), fromCol = from % 8;
+            const toRow = Math.floor(to / 8), toCol = to % 8;
+            const rowDiff = toRow - fromRow, colDiff = toCol - fromCol;
+
+            console.log('🔍 Validando mossa:', pieceType, 'da', indexToAlgebraic(from), 'a', indexToAlgebraic(to), 'diff:', rowDiff, colDiff);
+
+            switch (pieceType) {
+                case 'pawn':
+                    const isValid = isValidPawnMove(from, to, color, fromRow, toRow, colDiff, targetPiece);
+                    console.log('🔍 Pedone valido:', isValid);
+                    return isValid;
+                case 'rook':
+                    const rookValid = (rowDiff === 0 || colDiff === 0) && isPathClear(from, to);
+                    console.log('🔍 Torre valida:', rookValid);
+                    return rookValid;
+                case 'bishop':
+                    const bishopValid = Math.abs(rowDiff) === Math.abs(colDiff) && isPathClear(from, to);
+                    console.log('🔍 Alfiere valido:', bishopValid);
+                    return bishopValid;
+                case 'queen':
+                    const queenValid = (rowDiff === 0 || colDiff === 0 || Math.abs(rowDiff) === Math.abs(colDiff)) && isPathClear(from, to);
+                    console.log('🔍 Regina valida:', queenValid);
+                    return queenValid;
+                case 'knight':
+                    const knightValid = (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) || 
+                           (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2);
+                    console.log('🔍 Cavallo valido:', knightValid);
+                    return knightValid;
+                case 'king':
+                    if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) {
+                        console.log('🔍 Re valido (movimento normale)');
+                        return true;
+                    }
+                    if (rowDiff === 0 && Math.abs(colDiff) === 2) {
+                        const castleValid = canCastle(color, colDiff > 0);
+                        console.log('🔍 Arrocco valido:', castleValid);
+                        return castleValid;
+                    }
+                    console.log('🔍 Re non valido');
+                    return false;
+            }
+            console.log('❌ Tipo pezzo non riconosciuto');
+            return false;
+        }
+
+        function isValidPawnMove(from, to, color, fromRow, toRow, colDiff, targetPiece) {
+            const direction = color === 'white' ? -1 : 1;
+            const startRow = color === 'white' ? 6 : 1;
+            const rowDiff = toRow - fromRow;
+            
+            console.log('🔍 Pedone:', color, 'da riga', fromRow, 'a riga', toRow, 'direction:', direction, 'rowDiff:', rowDiff, 'colDiff:', colDiff);
+            
+            if (colDiff === 0 && !targetPiece) {
+                // Movimento in avanti
+                if (rowDiff === direction) {
+                    console.log('✅ Pedone: movimento 1 casella valido');
+                    return true;
+                }
+                if (fromRow === startRow && rowDiff === 2 * direction && !gameState.board[from + 8 * direction]) {
+                    console.log('✅ Pedone: movimento 2 caselle dalla posizione iniziale valido');
+                    return true;
+                }
+            }
+            
+            if (Math.abs(colDiff) === 1 && rowDiff === direction) {
+                // Cattura normale o en passant
+                if (targetPiece) {
+                    console.log('✅ Pedone: cattura normale valida');
+                    return true;
+                }
+                if (to === gameState.enPassantTarget) {
+                    console.log('✅ Pedone: cattura en passant valida');
+                    return true;
+                }
+            }
+            
+            console.log('❌ Pedone: mossa non valida');
+            return false;
+        }
+
+        function isPathClear(from, to) {
+            const fromRow = Math.floor(from / 8), fromCol = from % 8;
+            const toRow = Math.floor(to / 8), toCol = to % 8;
+            const rowStep = Math.sign(toRow - fromRow);
+            const colStep = Math.sign(toCol - fromCol);
+            
+            let r = fromRow + rowStep, c = fromCol + colStep;
+            while (r !== toRow || c !== toCol) {
+                if (gameState.board[r * 8 + c]) return false;
+                r += rowStep;
+                c += colStep;
+            }
+            return true;
+        }
+
+        function canCastle(color, kingside) {
+            const rights = gameState.castlingRights[color];
+            if ((!rights.kingside && kingside) || (!rights.queenside && !kingside)) return false;
+            if (isKingInCheck(color, gameState.board)) return false;
+
+            const row = color === 'white' ? 7 : 0;
+            const path = kingside ? [5, 6] : [1, 2, 3];
+            
+            // Controlla che il percorso sia libero
+            for (let col of path) {
+                if (gameState.board[row * 8 + col]) return false;
+            }
+            
+            // Controlla che il re non passi attraverso caselle sotto scacco
+            const checkPath = kingside ? [4, 5, 6] : [2, 3, 4];
+            for (let col of checkPath) {
+                const tempBoard = JSON.parse(JSON.stringify(gameState.board));
+                tempBoard[row * 8 + col] = tempBoard[row * 8 + 4];
+                tempBoard[row * 8 + 4] = null;
+                if (isKingInCheck(color, tempBoard)) return false;
+            }
+            
+            return true;
+        }
+
+        function isKingInCheck(color, board) {
+            let kingPos = -1;
+            for (let i = 0; i < 64; i++) {
+                if (board[i] && board[i][0] === color && board[i][1] === 'king') {
+                    kingPos = i;
+                    break;
+                }
+            }
+            if (kingPos === -1) return false;
+
+            const opponentColor = color === 'white' ? 'black' : 'white';
+            for (let i = 0; i < 64; i++) {
+                if (board[i] && board[i][0] === opponentColor) {
+                    if (canPieceAttack(i, kingPos, board)) return true;
+                }
+            }
+            return false;
+        }
+
+        function canPieceAttack(from, to, board) {
+            const piece = board[from];
+            if (!piece) return false;
+
+            const [color, pieceType] = piece;
+            const fromRow = Math.floor(from / 8), fromCol = from % 8;
+            const toRow = Math.floor(to / 8), toCol = to % 8;
+            const rowDiff = toRow - fromRow, colDiff = toCol - fromCol;
+
+            switch (pieceType) {
+                case 'pawn':
+                    const direction = color === 'white' ? -1 : 1;
+                    return Math.abs(colDiff) === 1 && rowDiff === direction;
+                case 'rook':
+                    return (rowDiff === 0 || colDiff === 0) && isPathClearForBoard(from, to, board);
+                case 'bishop':
+                    return Math.abs(rowDiff) === Math.abs(colDiff) && isPathClearForBoard(from, to, board);
+                case 'queen':
+                    return (rowDiff === 0 || colDiff === 0 || Math.abs(rowDiff) === Math.abs(colDiff)) && 
+                           isPathClearForBoard(from, to, board);
+                case 'knight':
+                    return (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) || 
+                           (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2);
+                case 'king':
+                    return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
+            }
+            return false;
+        }
+
+        function isPathClearForBoard(from, to, board) {
+            const fromRow = Math.floor(from / 8), fromCol = from % 8;
+            const toRow = Math.floor(to / 8), toCol = to % 8;
+            const rowStep = Math.sign(toRow - fromRow);
+            const colStep = Math.sign(toCol - fromCol);
+            
+            let r = fromRow + rowStep, c = fromCol + colStep;
+            while (r !== toRow || c !== toCol) {
+                if (board[r * 8 + c]) return false;
+                r += rowStep;
+                c += colStep;
+            }
+            return true;
+        }
+
+        async function makeMove(from, to) {
+            console.log('🚀 ESEGUENDO MOSSA da', indexToAlgebraic(from), 'a', indexToAlgebraic(to));
+            
+            const piece = gameState.board[from];
+            const [color, pieceType] = piece;
+            const capturedPiece = gameState.board[to];
+            const fromRow = Math.floor(from / 8), toRow = Math.floor(to / 8);
+            
+            console.log('🔍 Dettagli mossa:', {
+                piece: `${color} ${pieceType}`,
+                from: indexToAlgebraic(from),
+                to: indexToAlgebraic(to),
+                captured: capturedPiece ? `${capturedPiece[0]} ${capturedPiece[1]}` : 'nessuno'
+            });
+            
+            // Costruisci notazione della mossa
+            const moveNotation = getMoveNotation(from, to, piece, capturedPiece);
+            gameState.moveHistory.push(moveNotation);
+            console.log('📝 Notazione mossa:', moveNotation);
+
+            // === SUONI E MESSAGGI CHAT ===
+            let soundType = 'move';
+            let systemMessage = null;
+            
+            if (capturedPiece) {
+                soundType = 'capture';
+                const capturerName = gameState.players[color];
+                const capturedPieceName = capturedPiece[1] === 'pawn' ? 'pedone' : 
+                                        capturedPiece[1] === 'rook' ? 'torre' :
+                                        capturedPiece[1] === 'knight' ? 'cavallo' :
+                                        capturedPiece[1] === 'bishop' ? 'alfiere' :
+                                        capturedPiece[1] === 'queen' ? 'regina' : 'pezzo';
+                systemMessage = `⚔️ ${capturerName} cattura un ${capturedPieceName}!`;
+            }
+
+            // === ANIMAZIONE ===
+            const performMoveLogic = () => {
+                // Gestione mosse speciali
+                if (pieceType === 'king' && Math.abs((to % 8) - (from % 8)) === 2) {
+                    // Arrocco
+                    console.log('🏰 Eseguendo arrocco');
+                    const rookFrom = to % 8 > 4 ? to + 1 : to - 2;
+                    const rookTo = to % 8 > 4 ? to - 1 : to + 1;
+                    gameState.board[rookTo] = gameState.board[rookFrom];
+                    gameState.board[rookFrom] = null;
+                    
+                    const playerName = gameState.players[color];
+                    const castleType = to % 8 > 4 ? 'corto' : 'lungo';
+                    systemMessage = `🏰 ${playerName} fa l'arrocco ${castleType}!`;
+                    soundType = 'move'; // Arrocco usa suono mossa normale
+                }
+                
+                if (pieceType === 'pawn' && to === gameState.enPassantTarget) {
+                    // Cattura en passant
+                    console.log('⚔️ Cattura en passant');
+                    const capturedPawnIndex = to + (color === 'white' ? 8 : -8);
+                    gameState.board[capturedPawnIndex] = null;
+                    
+                    const playerName = gameState.players[color];
+                    systemMessage = `⚡ ${playerName} cattura en passant!`;
+                    soundType = 'capture';
+                }
+                
+                // Reset en passant target
+                gameState.enPassantTarget = null;
+                if (pieceType === 'pawn' && Math.abs(toRow - fromRow) === 2) {
+                    gameState.enPassantTarget = from + (to - from) / 2;
+                    console.log('🎯 Nuovo en passant target:', indexToAlgebraic(gameState.enPassantTarget));
+                }
+                
+                // Muovi il pezzo
+                gameState.board[to] = piece;
+                gameState.board[from] = null;
+                console.log('✅ Pezzo mosso fisicamente sulla scacchiera');
+
+                // Aggiorna diritti di arrocco
+                updateCastlingRights(from, to, piece);
+                
+                // Aggiorna contatori
+                if (capturedPiece || pieceType === 'pawn') {
+                    gameState.halfMoveClock = 0;
+                } else {
+                    gameState.halfMoveClock++;
+                }
+                
+                if (color === 'black') {
+                    gameState.fullMoveNumber++;
+                }
+                
+                // Verifica scacco prima della promozione
+                const nextPlayer = color === 'white' ? 'black' : 'white';
+                const willBeCheck = isKingInCheck(nextPlayer, gameState.board);
+                
+                // Gestione promozione pedone
+                if (pieceType === 'pawn' && (toRow === 0 || toRow === 7)) {
+                    console.log('👑 Promozione pedone richiesta');
+                    promotionData = { position: to, color: color };
+                    
+                    const playerName = gameState.players[color];
+                    systemMessage = `👑 ${playerName} promuove un pedone!`;
+                    
+                    renderBoard(); // Aggiorna la scacchiera prima di mostrare il modal
+                    showPromotionModal(color);
+                    
+                    // Riproduci suono e aggiungi messaggio sistema
+                    playSound(soundType);
+                    if (systemMessage) addSystemMessage(systemMessage);
+                    
+                    return;
+                }
+
+                console.log('🔄 Completando la mossa...');
+                
+                // Riproduci suono appropriato
+                if (willBeCheck) {
+                    playSound('check');
+                    const nextPlayerName = gameState.players[nextPlayer];
+                    addSystemMessage(`⚠️ ${nextPlayerName} è sotto scacco!`);
+                } else {
+                    playSound(soundType);
+                }
+                
+                // Aggiungi messaggio di sistema se presente
+                if (systemMessage) {
+                    addSystemMessage(systemMessage);
+                }
+                
+                completeMove();
+            };
+
+            // Rimuovi evidenziazioni prima dell'animazione
+            document.querySelectorAll('.square.selected, .square.possible-move, .square.possible-capture').forEach(sq => {
+                sq.classList.remove('selected', 'possible-move', 'possible-capture');
+            });
+
+            // Se c'è una cattura, anima prima la cattura
+            if (capturedPiece) {
+                const capturedSquare = document.querySelector(`[data-logical-index="${to}"]`);
+                animateCapture(capturedSquare, () => {
+                    // Poi anima il movimento
+                    animateMove(from, to, piece, performMoveLogic);
+                });
+            } else {
+                // Solo movimento
+                animateMove(from, to, piece, performMoveLogic);
+            }
+        }
+
+        function updateCastlingRights(from, to, piece) {
+            const [color, pieceType] = piece;
+            
+            if (pieceType === 'king') {
+                gameState.castlingRights[color] = { kingside: false, queenside: false };
+            }
+            
+            if (pieceType === 'rook') {
+                if (from === (color === 'white' ? 63 : 7)) {
+                    gameState.castlingRights[color].kingside = false;
+                }
+                if (from === (color === 'white' ? 56 : 0)) {
+                    gameState.castlingRights[color].queenside = false;
+                }
+            }
+            
+            // Se una torre viene catturata
+            if (to === 63) gameState.castlingRights.white.kingside = false;
+            if (to === 56) gameState.castlingRights.white.queenside = false;
+            if (to === 7) gameState.castlingRights.black.kingside = false;
+            if (to === 0) gameState.castlingRights.black.queenside = false;
+        }
+
+        function getMoveNotation(from, to, piece, capturedPiece) {
+            const [color, pieceType] = piece;
+            const fromAlgebraic = indexToAlgebraic(from);
+            const toAlgebraic = indexToAlgebraic(to);
+            
+            let notation = '';
+            
+            // Arrocco
+            if (pieceType === 'king' && Math.abs((to % 8) - (from % 8)) === 2) {
+                return to % 8 > 4 ? 'O-O' : 'O-O-O';
+            }
+            
+            // Pezzo (non pedoni)
+            if (pieceType !== 'pawn') {
+                notation += pieceType.charAt(0).toUpperCase();
+                
+                // Disambiguazione se necessario
+                const disambiguation = getDisambiguation(from, to, piece);
+                notation += disambiguation;
+            }
+            
+            // Cattura
+            if (capturedPiece || (pieceType === 'pawn' && to === gameState.enPassantTarget)) {
+                if (pieceType === 'pawn') {
+                    notation += fromAlgebraic.charAt(0);
+                }
+                notation += 'x';
+            }
+            
+            notation += toAlgebraic;
+            
+            // Promozione (sarà aggiunta successivamente se necessario)
+            
+            // Scacco/Scacco matto (sarà verificato dopo la mossa)
+            
+            return notation;
+        }
+
+        function getDisambiguation(from, to, piece) {
+            const [color, pieceType] = piece;
+            const fromRow = Math.floor(from / 8), fromCol = from % 8;
+            
+            // Trova altri pezzi dello stesso tipo che possono raggiungere la stessa casella
+            const sameTypePieces = [];
+            for (let i = 0; i < 64; i++) {
+                if (i !== from && gameState.board[i] && 
+                    gameState.board[i][0] === color && gameState.board[i][1] === pieceType) {
+                    if (isValidMove(i, to)) {
+                        sameTypePieces.push(i);
+                    }
+                }
+            }
+            
+            if (sameTypePieces.length === 0) return '';
+            
+            // Controlla se serve disambiguazione per colonna
+            const sameColumn = sameTypePieces.some(pos => pos % 8 === fromCol);
+            if (!sameColumn) {
+                return String.fromCharCode(97 + fromCol);
+            }
+            
+            // Controlla se serve disambiguazione per riga
+            const sameRow = sameTypePieces.some(pos => Math.floor(pos / 8) === fromRow);
+            if (!sameRow) {
+                return (8 - fromRow).toString();
+            }
+            
+            // Serve disambiguazione completa
+            return String.fromCharCode(97 + fromCol) + (8 - fromRow);
+        }
+
+        async function completeMove() {
+            const previousPlayer = gameState.currentPlayer;
+            gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
+            
+            // Verifica scacco/scacco matto
+            const inCheck = isKingInCheck(gameState.currentPlayer, gameState.board);
+            const hasCheckmate = inCheck && isCheckmate(gameState.currentPlayer);
+            const hasStalemate = !inCheck && isStalemate(gameState.currentPlayer);
+            
+            // Aggiorna l'ultima mossa con scacco/matto
+            if (gameState.moveHistory.length > 0) {
+                const lastMoveIndex = gameState.moveHistory.length - 1;
+                let lastMove = gameState.moveHistory[lastMoveIndex];
+                
+                if (hasCheckmate) {
+                    lastMove += '#';
+                } else if (inCheck) {
+                    lastMove += '+';
+                }
+                
+                gameState.moveHistory[lastMoveIndex] = lastMove;
+            }
+            
+            await debouncedSaveGame();
+            
+            // Aggiorna UI dopo l'animazione
+            renderBoard();
+            updateGameInfo();
+            updateMovesHistory();
+            
+            // Controlla fine partita con suoni e messaggi
+            if (hasCheckmate) {
+                gameState.gameEnded = true;
+                const winnerName = gameState.players[previousPlayer];
+                gameState.result = `Scacco matto! Vince ${winnerName}`;
+                
+                playSound('victory');
+                addSystemMessage(`🎉 SCACCO MATTO! Vittoria di ${winnerName}! 🎉`);
+                showMessage('game-status', gameState.result, 'success');
+                await saveGameToFirebase();
+                
+            } else if (hasStalemate) {
+                gameState.gameEnded = true;
+                gameState.result = 'Partita patta per stallo';
+                
+                playSound('move'); // Suono neutro per pareggio
+                addSystemMessage('🤝 Partita terminata in STALLO - Pareggio!');
+                showMessage('game-status', gameState.result, 'warning');
+                await saveGameToFirebase();
+                
+            } else if (gameState.halfMoveClock >= 100) {
+                gameState.gameEnded = true;
+                gameState.result = 'Partita patta per regola delle 50 mosse';
+                
+                playSound('move');
+                addSystemMessage('📏 Partita patta per regola delle 50 mosse!');
+                showMessage('game-status', gameState.result, 'warning');
+                await saveGameToFirebase();
+                
+            } else if (isInsufficientMaterial()) {
+                gameState.gameEnded = true;
+                gameState.result = 'Partita patta per insufficienza materiale';
+                
+                playSound('move');
+                addSystemMessage('⚖️ Partita patta per insufficienza materiale!');
+                showMessage('game-status', gameState.result, 'warning');
+                await saveGameToFirebase();
+            }
+        }
+
+        function isCheckmate(color) {
+            if (!isKingInCheck(color, gameState.board)) return false;
+            return !hasLegalMoves(color);
+        }
+
+        function isStalemate(color) {
+            if (isKingInCheck(color, gameState.board)) return false;
+            return !hasLegalMoves(color);
+        }
+
+        function hasLegalMoves(color) {
+            for (let from = 0; from < 64; from++) {
+                const piece = gameState.board[from];
+                if (piece && piece[0] === color) {
+                    for (let to = 0; to < 64; to++) {
+                        if (isValidMove(from, to)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function isInsufficientMaterial() {
+            const pieces = gameState.board.filter(p => p !== null);
+            
+            // Solo re
+            if (pieces.length === 2) return true;
+            
+            // Re + alfiere o cavallo
+            if (pieces.length === 3) {
+                const nonKings = pieces.filter(p => p[1] !== 'king');
+                return nonKings.length === 1 && ['bishop', 'knight'].includes(nonKings[0][1]);
+            }
+            
+            // Re + re + alfieri dello stesso colore
+            if (pieces.length === 4) {
+                const bishops = pieces.filter(p => p[1] === 'bishop');
+                if (bishops.length === 2) {
+                    // Controlla se sono su caselle dello stesso colore
+                    const bishopSquares = [];
+                    for (let i = 0; i < 64; i++) {
+                        if (gameState.board[i] && gameState.board[i][1] === 'bishop') {
+                            bishopSquares.push(i);
+                        }
+                    }
+                    if (bishopSquares.length === 2) {
+                        const square1Color = (Math.floor(bishopSquares[0] / 8) + bishopSquares[0] % 8) % 2;
+                        const square2Color = (Math.floor(bishopSquares[1] / 8) + bishopSquares[1] % 8) % 2;
+                        return square1Color === square2Color;
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        // === PROMOTION MODAL ===
+        function showPromotionModal(color) {
+            const modal = document.getElementById('promotion-modal');
+            
+            // Aggiorna i simboli con gli stili corretti
+            const queenElement = document.getElementById('promotion-queen');
+            const rookElement = document.getElementById('promotion-rook');  
+            const bishopElement = document.getElementById('promotion-bishop');
+            const knightElement = document.getElementById('promotion-knight');
+            
+            queenElement.textContent = chessPieces[color]['queen'];
+            rookElement.textContent = chessPieces[color]['rook'];
+            bishopElement.textContent = chessPieces[color]['bishop'];
+            knightElement.textContent = chessPieces[color]['knight'];
+            
+            // Applica stili ai pezzi di promozione
+            [queenElement, rookElement, bishopElement, knightElement].forEach(el => {
+                el.className = `piece-${color}`;
+            });
+            
+            modal.classList.add('active');
+            
+            // Focus first promotion piece for accessibility
+            setTimeout(() => {
+                document.querySelector('.promotion-piece').focus();
+            }, 100);
+        }
+
+        async function promoteTopiece(pieceType) {
+            if (!promotionData) return;
+            
+            gameState.board[promotionData.position] = [promotionData.color, pieceType];
+            
+            // Aggiorna notazione dell'ultima mossa
+            if (gameState.moveHistory.length > 0) {
+                const lastMoveIndex = gameState.moveHistory.length - 1;
+                let lastMove = gameState.moveHistory[lastMoveIndex];
+                const promotionSymbol = pieceType === 'queen' ? 'Q' : 
+                                      pieceType === 'rook' ? 'R' :
+                                      pieceType === 'bishop' ? 'B' : 'N';
+                lastMove += '=' + promotionSymbol;
+                gameState.moveHistory[lastMoveIndex] = lastMove;
+            }
+            
+            document.getElementById('promotion-modal').classList.remove('active');
+            promotionData = null;
+            
+            // Renderizza di nuovo la scacchiera e completa la mossa
+            renderBoard();
+            await completeMove();
+        }
+
+        // === UI UPDATE FUNCTIONS ===
+        function updateGameInfo() {
+            const currentPlayerName = gameState.players[gameState.currentPlayer];
+            let turnInfo = `Turno di ${currentPlayerName}`;
+            
+            if (gameState.playerColor && !gameState.isAdmin) {
+                turnInfo += (gameState.playerColor === gameState.currentPlayer) ? ' - È il tuo turno!' : ' - Attendi l\'avversario';
+            }
+            
+            document.getElementById('current-turn').textContent = turnInfo;
+            
+            // Aggiorna evidenziazione giocatore attivo
+            document.querySelectorAll('.white-player, .black-player').forEach(el => {
+                el.classList.remove('active-player');
+            });
+            document.querySelector(`.${gameState.currentPlayer}-player`).classList.add('active-player');
+            
+            // Mostra risultato se partita terminata
+            if (gameState.gameEnded && gameState.result) {
+                const statusDiv = document.getElementById('game-status');
+                statusDiv.innerHTML = `<div class="game-result">${gameState.result}</div>`;
+            } else if (isKingInCheck(gameState.currentPlayer, gameState.board)) {
+                showMessage('game-status', `⚠️ ${currentPlayerName} è sotto scacco!`, 'warning');
+            } else {
+                document.getElementById('game-status').innerHTML = '';
+            }
+        }
+
+        function updateMovesHistory() {
+            const movesList = document.getElementById('moves-list');
+            movesList.innerHTML = '';
+            
+            if (gameState.moveHistory.length === 0) {
+                movesList.innerHTML = '<div style="text-align: center; color: #666; font-style: italic;">Nessuna mossa ancora</div>';
+                return;
+            }
+            
+            for (let i = 0; i < gameState.moveHistory.length; i += 2) {
+                const moveNumber = Math.floor(i / 2) + 1;
+                const whiteMove = gameState.moveHistory[i] || '';
+                const blackMove = gameState.moveHistory[i + 1] || '';
+                
+                const moveDiv = document.createElement('div');
+                moveDiv.className = 'move-item';
+                moveDiv.innerHTML = `
+                    <span class="move-number">${moveNumber}.</span>
+                    <span class="move-white">${whiteMove}</span>
+                    <span class="move-black">${blackMove}</span>
+                `;
+                movesList.appendChild(moveDiv);
+            }
+            
+            // Auto-scroll to bottom
+            movesList.scrollTop = movesList.scrollHeight;
+        }
+
+        async function endGame(result) {
+            if (!gameState.isAdmin) return;
+            
+            let resultText;
+            switch (result) {
+                case 'white':
+                    resultText = `Vittoria del ${gameState.players.white}!`;
+                    break;
+                case 'black':
+                    resultText = `Vittoria del ${gameState.players.black}!`;
+                    break;
+                case 'draw':
+                    resultText = 'Partita terminata in pareggio';
+                    break;
+                default:
+                    resultText = 'Partita terminata';
+            }
+            
+            gameState.gameEnded = true;
+            gameState.result = resultText;
+            
+            await saveGameToFirebase();
+            updateGameInfo();
+            showMessage('game-status', resultText, 'success');
+        }
+
+        // === DEBUG TEST + SECURITY ===
+        window.testChessMove = function() {
+            console.log('🧪 TEST: Stato gioco attuale:');
+            console.log('- gameActive:', gameState.gameActive);
+            console.log('- currentPlayer:', gameState.currentPlayer);
+            console.log('- playerColor:', gameState.playerColor);
+            console.log('- isAdmin:', gameState.isAdmin);
+            console.log('- adminOverrideMode:', gameState.adminOverrideMode);
+            console.log('- reallyAdmin:', localStorage.getItem('chessAdminAuth') === 'true');
+            console.log('- audioEnabled:', audioEnabled);
+            console.log('- messagesCount:', gameState.messages ? gameState.messages.length : 0);
+            console.log('- selectedSquare:', gameState.selectedSquare);
+            console.log('- board[52] (e2):', gameState.board[52]);
+            console.log('- board[44] (e3):', gameState.board[44]);
+            
+            // Test diretto movimento e2-e3
+            if (gameState.board[52] && gameState.board[52][1] === 'pawn') {
+                console.log('🧪 TEST: Simulando mossa e2-e3');
+                const isValid = isValidMove(52, 44);
+                console.log('🧪 TEST: Mossa valida?', isValid);
+                
+                if (isValid && canPlayerMove()) {
+                    console.log('🧪 TEST: Eseguendo mossa...');
+                    makeMove(52, 44);
+                } else {
+                    console.log('🧪 TEST: Non può muovere o mossa non valida');
+                }
+            } else {
+                console.log('🧪 TEST: Nessun pedone in e2');
             }
         };
-        // ... resto script esistente, inclusi renderBoard e renderCapturedPieces override ...
+
+        // Test suoni
+        window.testSounds = function() {
+            console.log('🔊 TEST AUDIO:');
+            console.log('Testando tutti i suoni...');
+            
+            playSound('move');
+            setTimeout(() => playSound('capture'), 1000);
+            setTimeout(() => playSound('check'), 2000);
+            setTimeout(() => playSound('victory'), 3000);
+            setTimeout(() => playSound('message'), 4000);
+        };
+
+        // Test chat
+        window.testChat = function() {
+            if (!gameState.gameId) {
+                console.log('❌ Nessuna partita attiva per testare la chat');
+                return;
+            }
+            
+            addSystemMessage('🧪 Test messaggio di sistema');
+            console.log('💬 Messaggio di test aggiunto');
+        };
+
+        // Controllo di sicurezza: previene manipolazione manuale del gameState
+        window.addEventListener('beforeunload', () => {
+            // Verifica coerenza prima di chiudere
+            if (gameState.isAdmin && localStorage.getItem('chessAdminAuth') !== 'true') {
+                console.warn('⚠️ Rilevata potenziale manipolazione dello stato admin');
+                gameState.isAdmin = false;
+                gameState.adminOverrideMode = false;
+            }
+        });
+
+        // === INITIALIZATION ===
+        async function initializeApp() {
+            // Accessibility improvements
+            document.querySelectorAll('.promotion-piece').forEach(piece => {
+                piece.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        piece.click();
+                    }
+                });
+            });
+            
+            const gameId = getUrlParameter('game');
+            if (gameId) {
+                showScreen('loading-screen');
+                const gameLoaded = await loadGameFromFirebase(gameId);
+                if (gameLoaded) {
+                    const isAdminLoggedIn = localStorage.getItem('chessAdminAuth') === 'true';
+                    gameState.isAdmin = isAdminLoggedIn;
+                    gameState.playerColor = isAdminLoggedIn ? 'white' : 'black';
+                    setupGameListener(gameId);
+                    showGame();
+                } else {
+                    showScreen('error-screen');
+                    document.getElementById('error-message').textContent = `Partita ${gameId} non trovata.`;
+                }
+            } else {
+                if (localStorage.getItem('chessAdminAuth') === 'true') {
+                    showAdminPanel();
+                } else {
+                    showScreen('admin-login');
+                }
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('load', () => {
+            setTimeout(initializeApp, 500);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (currentGameListener) {
+                window.firebaseOff(currentGameListener);
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (document.getElementById('promotion-modal').classList.contains('active')) {
+                    // Non permettere di chiudere il modal di promozione con ESC
+                    return;
+                }
+                
+                if (gameState.selectedSquare !== null) {
+                    gameState.selectedSquare = null;
+                    document.querySelectorAll('.square.selected, .square.possible-move, .square.possible-capture').forEach(sq => {
+                        sq.classList.remove('selected', 'possible-move', 'possible-capture');
+                    });
+                }
+            }
+        });
+
+        // Global error handling
+        window.addEventListener('error', (e) => {
+            console.error('❌ Errore globale:', e.error);
+            showMessage('game-status', 'Si è verificato un errore. Ricarica la pagina se il problema persiste.', 'error');
+        });
+
+        // Initialize game state
+        resetGameState();
+        
+        console.log('🎯 Chess Host inizializzato con successo!');
     </script>
 </body>
 </html>
